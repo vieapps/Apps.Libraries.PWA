@@ -1,0 +1,11 @@
+*~
+.DS_Store
+.vscode/
+.sourcemaps/
+node_modules/
+platforms/*
+!platforms/platforms.json
+plugins/*
+!plugins/browser.json
+!plugins/fetch.json
+www/
