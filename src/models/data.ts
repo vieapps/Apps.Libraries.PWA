@@ -21,7 +21,7 @@ export namespace AppData {
 			host: "",
 			tracking: {
 				google: "UA-3060572-8",
-				googleDomains: ["libs.vieapps.net"],
+				googleDomains: ["libs.apps.prj.vn"],
 				facebook: ""
 			},
 			refer: {
