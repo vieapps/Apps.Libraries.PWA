@@ -441,7 +441,7 @@ export class ProfilePage {
 			else if (this.genderCtrl && !form.controls.gender.valid) {
 				AppUtility.focus(this.genderCtrl, this.keyboard);
 			}
-			else if (this.birthDayCtrl && !form.controls.birthYear.valid) {
+			else if (this.birthDayCtrl && !form.controls.birthDay.valid) {
 				AppUtility.focus(this.birthDayCtrl, this.keyboard);
 			}
 			else if (this.addressCtrl && !form.controls.address.valid) {
@@ -663,7 +663,7 @@ export class ProfilePage {
 	}
 
 	uploadAvatar(onCompleted?: () => void) {
-		if (this.info.avatar.mode == "Avatar" && this.cropper.data.image != "" && this.info.avatar.current) {
+		if (this.info.avatar.mode == "Avatar" && this.cropper.data.image != "" && this.cropper.data.image != this.info.avatar.current) {
 			this.http.post(
 				AppData.Configuration.app.uris.files + "avatars",
 				JSON.stringify({ "Data": this.cropper.data.image }),
