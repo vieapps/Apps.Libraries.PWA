@@ -1,0 +1,37 @@
+{
+    "prepare_queue": {
+        "installed": [],
+        "uninstalled": []
+    },
+    "config_munge": {
+        "files": {}
+    },
+    "installed_plugins": {
+        "cordova-plugin-device": {
+            "PACKAGE_NAME": "net.vieapps.apps.libraries"
+        },
+        "cordova-plugin-file": {
+            "PACKAGE_NAME": "net.vieapps.apps.libraries"
+        },
+        "cordova-plugin-file-transfer": {
+            "PACKAGE_NAME": "net.vieapps.apps.libraries"
+        },
+        "cordova-plugin-splashscreen": {
+            "PACKAGE_NAME": "net.vieapps.apps.libraries"
+        },
+        "cordova-plugin-statusbar": {
+            "PACKAGE_NAME": "net.vieapps.apps.libraries"
+        },
+        "cordova-plugin-whitelist": {
+            "PACKAGE_NAME": "net.vieapps.apps.libraries"
+        },
+        "ionic-plugin-keyboard": {
+            "PACKAGE_NAME": "net.vieapps.apps.libraries"
+        }
+    },
+    "dependent_plugins": {
+        "cordova-plugin-compat": {
+            "PACKAGE_NAME": "net.vieapps.apps.libraries"
+        }
+    }
+}

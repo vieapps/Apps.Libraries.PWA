@@ -7,9 +7,6 @@
         "files": {}
     },
     "installed_plugins": {
-        "cordova-plugin-console": {
-            "PACKAGE_NAME": "net.vieapps.apps.books"
-        },
         "cordova-plugin-device": {
             "PACKAGE_NAME": "net.vieapps.apps.books"
         },
