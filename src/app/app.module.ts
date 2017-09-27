@@ -36,6 +36,7 @@ import { SearchLibrariesPage } from "../pages/libraries/search/search";
 import { LibraryInfoPage } from "../pages/libraries/info/info";
 import { SurfBooksPage } from "../pages/books/surf/surf";
 import { BookInfoPage } from "../pages/books/info/info";
+import { AddBookPage } from "../pages/books/add/add";
 
 const cloudSettings: CloudSettings = {
 	"core": {
@@ -55,6 +56,7 @@ const cloudSettings: CloudSettings = {
 		LibraryInfoPage,
 		SurfBooksPage,
 		BookInfoPage,
+		AddBookPage,
 	],
 	imports: [
 		BrowserModule,
@@ -80,6 +82,7 @@ const cloudSettings: CloudSettings = {
 		LibraryInfoPage,
 		SurfBooksPage,
 		BookInfoPage,
+		AddBookPage,
 	],
 	providers: [
 		ConfigurationService,

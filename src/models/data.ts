@@ -30,9 +30,9 @@ export namespace AppData {
 			}
 		},
 		session: {
-			id: null,
+			id: null as string,
 			jwt: null,
-			account: null,
+			account: null as Account,
 			keys: null,
 			device: "",
 			captcha: {
@@ -54,8 +54,20 @@ export namespace AppData {
 		}
 	};
 
-	/** Statistics */
-	export var Statistics = new AppModels.Statistics();
+	/** Account (of the app) */
+	export class Account {
+		id: string = null;
+		roles: Array<string> = null;
+		privileges: Array<AppModels.Privilege> = null;
+		status: string = null;
+		profile: AppModels.Account = null;
+		facebook = {
+			id: null as string,
+			name: null as string,
+			pictureUrl: null as string,
+			profileUrl: null as string
+		};
+	}
 
 	/** Accounts */
 	export var Accounts = new Collections.Dictionary<string, AppModels.Account>();
@@ -68,6 +80,9 @@ export namespace AppData {
 
 	/** Transactions of all libraries */
 	export var Transactions = new Collections.Dictionary<string, AppModels.Transaction>();
+
+	/** Statistics */
+	export var Statistics = new AppModels.Statistics();
 	
 	/** Paginations */
 	export var Paginations = {

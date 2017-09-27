@@ -127,29 +127,22 @@ export class SearchProfilesPage {
 					this.info.totalRecords = AppData.Paginations.computeTotal(this.info.pageNumber, this.info.pagination);
 				}
 
-				this.doBuild(this.info.state.searching && data != undefined ? data.Data.Objects : undefined);
+				this.doBuild(this.info.state.searching && data ? data.Data.Objects : undefined);
 				onCompleted != undefined && onCompleted();
 			}
 		);
 	}
 
-	doBuild(searchResults?: Array<AppModels.Account>) {
+	doBuild(searchResults?: Array<any>) {
 		// initialize the list
-		var accounts = new List(
-			searchResults != undefined
-				? searchResults
-				: AppData.Accounts.values()
-			);
+		var accounts = searchResults
+				? new List(searchResults).Select(a => AppData.Accounts.containsKey(a.ID) ? AppData.Accounts.getValue(a.ID) : AppModels.Account.deserialize(a))
+				: new List(AppData.Accounts.values())
 
 		// apply filter-by
 		if (this.info.state.filtering && AppUtility.isNotEmpty(this.info.filterBy.Query)) {
 			let query = AppUtility.toANSI(this.info.filterBy.Query).trim().toLowerCase();
-			accounts = accounts.Where(a => AppUtility.indexOf(a.Title, query) > -1);
-		}
-
-		// transform
-		if (searchResults != undefined) {
-			accounts = accounts.Select(a => AppModels.Account.deserialize(a));
+			accounts = accounts.Where(a => AppUtility.indexOf(a.ANSITitle, query) > -1);
 		}
 
 		// apply order-by
@@ -167,21 +160,20 @@ export class SearchProfilesPage {
 				break;
 		}
 
-		// paging
+		// pagination
 		if (!this.info.state.searching && !this.info.state.filtering && this.info.pageNumber > 0) {
-			accounts = accounts.Take(this.info.pageNumber * (this.info.pagination != undefined ? this.info.pagination.PageSize : 20));
+			accounts = accounts.Take(this.info.pageNumber * (this.info.pagination ? this.info.pagination.PageSize : 20));
 		}
 
-		// convert the list of results to array
+		// array of accounts
 		this.accounts = accounts.ToArray();
 
-		// prepare ratings
-		new List(this.accounts).ForEach((a) => {
-			if (!this.ratings[a.ID]) {
-				let rating = a.RatingPoints.getValue("General");
-				this.ratings[a.ID] = rating != undefined ? rating.Average : 0;
-			}
-		});
+		// ratings of accounts
+		accounts.Where(a => !this.ratings[a.ID])
+			.ForEach(a => this.ratings[a.ID] = a.RatingPoints.containsKey("General")
+				? a.RatingPoints.getValue("General").Average
+				: 0
+			);
 	}
 
 	trackBy(index: number, account: AppModels.Account) {

@@ -110,9 +110,7 @@ export class ConfigurationService {
 			if (data.Status == "OK") {
 				await this.updateSessionAsync(data.Data, () => {
 					let isAuthenticated = this.isAuthenticated() && AppUtility.isObject(AppData.Configuration.session.account, true);
-					AppData.Configuration.session.account = isAuthenticated
-						? AppData.Configuration.session.account
-						: this.getAccount(true);
+					AppData.Configuration.session.account = this.getAccount(!isAuthenticated);
 					AppEvents.broadcast(isAuthenticated ? "SessionIsRegistered" : "SessionIsInitialized", AppData.Configuration.session);
 					onNext != undefined && onNext(data);
 				});
@@ -230,21 +228,10 @@ export class ConfigurationService {
 
 	/** Gets the information of the current/default account */
 	getAccount(getDefault?: boolean) {
-		return AppUtility.isTrue(getDefault) || AppData.Configuration.session.account == null
-			? {
-					id: null,
-					roles: null,
-					privileges: null,
-					status: null,
-					profile: null,
-					facebook: {
-						id: null,
-						name: null,
-						pictureUrl: null,
-						profileUrl: null
-					}
-				}
+		let account = AppUtility.isTrue(getDefault) || AppData.Configuration.session.account == null
+			? undefined
 			: AppData.Configuration.session.account;
+		return account || new AppData.Account();
 	}
 
 	/** Prepares account information */
@@ -282,15 +269,10 @@ export class ConfigurationService {
 	 */
 	updateAccount(data: any, onCompleted?: () => void) {
 		let info = this.prepareAccount(data);
-		if (info.Roles) {
-			AppData.Configuration.session.account.roles = info.Roles;
-		}
-		if (info.Privileges) {
-			AppData.Configuration.session.account.privileges = info.Privileges;
-		}
-		if (info.Status) {
-			AppData.Configuration.session.account.status = info.Status;
-		}
+		AppData.Configuration.session.account = AppData.Configuration.session.account || this.getAccount(true);
+		AppData.Configuration.session.account.roles = info.Roles;
+		AppData.Configuration.session.account.privileges = info.Privileges;
+		AppData.Configuration.session.account.status = info.Status;
 		onCompleted != undefined && onCompleted();
 	}
 

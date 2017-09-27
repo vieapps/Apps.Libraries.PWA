@@ -148,7 +148,7 @@ export class SearchPage {
 		this.info.totalRecords = AppData.Paginations.computeTotal(this.info.pageNumber, this.info.pagination);
 
 		// initialize
-		var books = AppUtility.isNotEmpty(this.info.filterBy.Query) && results != undefined
+		var books = AppUtility.isNotEmpty(this.info.filterBy.Query) && results
 			? new List<any>(results.Data.Objects).Select(b => AppData.Books.containsKey(b.ID) ? AppData.Books.getValue(b.ID) : AppModels.Book.deserialize(b))
 			: new List(AppData.Books.values());
 

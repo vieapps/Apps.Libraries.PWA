@@ -9,6 +9,8 @@ import { AppModels } from "../../../models/objects";
 import { ConfigurationService } from "../../../providers/configuration";
 import { BooksService } from "../../../providers/books";
 
+import { AddBookPage } from "../add/add";
+
 @Component({
 	selector: "page-book-info",	
 	templateUrl: "info.html"
@@ -27,10 +29,14 @@ export class BookInfoPage {
 	// attributes
 	info = {
 		book: new AppModels.Book(),
-		view: undefined,
-		download: undefined,
+		view: undefined as AppModels.CounterInfo,
+		borrowed: undefined as AppModels.CounterInfo,
 		title: "Thông tin",
 		rating: 0.0,
+		stocks: {
+			libraries: 0,
+			available: 0
+		},
 		limit: 260,
 		uri: "",
 		qrcode: "",
@@ -40,21 +46,26 @@ export class BookInfoPage {
 	// events
 	ionViewDidLoad() {
 		var id = this.navParams.get("ID") as string;
-		var existed = AppData.Books.containsKey(id);
-			
-		if (existed) {
-			this.prepare(true);
+		if (id && AppData.Books.containsKey(id)) {
+			this.booksSvc.updateCounters(id);
+			if (!AppData.Books.getValue(id).Cards) {
+				this.booksSvc.getCards(id);
+			}
+			this.prepare();
 		}
 		else {
 			this.booksSvc.getAsync(id, () => {
-				this.prepare(true);
+				if (AppData.Books.containsKey(id) && !AppData.Books.getValue(id).Cards) {
+					this.booksSvc.getCards(id);
+				}
+				this.prepare();
 			});
 		}
 
 		AppEvents.on(
 			"BookStatisticsAreUpdated",
 			(info: any) => {
-				if (this.info.book != undefined && this.info.book.ID == info.args.ID) {
+				if (this.info.book && this.info.book.ID == info.args.ID) {
 					this.prepare();
 				}
 			},
@@ -66,24 +77,29 @@ export class BookInfoPage {
 		AppEvents.off("BookStatisticsAreUpdated", "EventHandlerToUpdateBookStatistics");
 	}
 
-	prepare(checkFiles?: boolean) {
+	prepare() {
 		this.info.book = AppData.Books.getValue(this.navParams.get("ID") as string);
-		this.info.view = this.info.book.Counters.getValue("View");
-		this.info.download = this.info.book.Counters.getValue("Download");
 		AppEvents.broadcast("SetCategory", { Name: this.info.book.Category });
+
+		this.info.view = this.info.book.Counters.getValue("View");
+		this.info.borrowed = this.info.book.Counters.getValue("Borrowed");
 		
-		var rating = this.info.book.RatingPoints.getValue("General");
-		this.info.rating = rating != undefined
-			? rating.Average
+		this.info.rating = this.info.book.RatingPoints.containsKey("General")
+			? this.info.book.RatingPoints.getValue("General").Average
 			: 0.0;
+
+		this.info.stocks.libraries = this.info.book.Cards
+			? this.info.book.Cards.size() 
+			: 0;
+
+		this.info.stocks.available = this.info.book.Stocks.containsKey("Available")
+			? this.info.book.Stocks.getValue("Available").Total
+			: 0;
 
 		this.info.uri = AppUtility.getUri() + "#?book=" + AppUtility.getBase64UrlParam({ ID: this.info.book.ID });
 		this.info.qrcode = this.info.processByApp
-			? "vieapps-books://" + this.info.book.ID
+			? "vieapps-paper-book://" + this.info.book.ID
 			: this.info.uri;
-
-		// to do: load cards
-
 	}
 
 	showAlert(title: string, message: string, button?: string, func?: () => void) {
@@ -98,6 +114,34 @@ export class BookInfoPage {
 				}
 			}]
 		}).present();
+	}
+
+	getSummary() {
+		var summary = this.info.book.Summary;
+		return this.info.limit > 0 && summary.length > this.info.limit
+			? summary.substring(0, this.info.limit) + "..."
+			: summary;
+	}
+
+	borrowBook() {
+		if (!this.configSvc.isAuthenticated()) {
+			this.showAlert("Chú ý", "Cần đăng nhập để có thể mượn được sách!");
+		}
+		else {
+			
+		}
+	}
+
+	canAddBook() {
+		return this.configSvc.isAuthenticated() && AppData.Configuration.session.account.profile.Libraries.length > 0;		
+	}
+
+	addBook() {
+		this.navCtrl.push(AddBookPage, { BookID: this.info.book.ID });
+	}
+
+	showActions() {
+
 	}
 
 }

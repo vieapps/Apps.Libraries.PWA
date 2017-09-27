@@ -1,0 +1,34 @@
+page-add-book {
+	div.info > ion-thumbnail {
+		float: left;
+	}
+	div.info > ion-thumbnail > img {
+		max-height: 120px;
+		border-radius: 5px;
+		margin: 0 16px;
+	}
+	div.info > h2 {
+		margin: 1.6rem 0;
+	}
+	div.info > div {
+		padding-bottom: 5px;
+	}
+	div.stocks {
+		border-top: solid 1px #ccc;
+		margin-top: 16px;
+	}
+	ion-list.current {
+		margin-top: 16px;
+	}
+	ion-list.current > ion-list-header {
+		margin-bottom: 0;
+	}
+	ion-list.current ion-label > span {
+		float: right;
+		min-width: 40px;
+		text-align: center;
+	}
+	ion-list.current ion-label > span.available {
+		color: green;
+	}
+}

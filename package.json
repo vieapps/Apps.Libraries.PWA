@@ -1,7 +1,7 @@
 {
     "name": "vieapps-social-libraries",
     "author": "VIEApps.net",
-    "homepage": "httpss://libraries.vieapps.net/",
+    "homepage": "https://libraries.vieapps.net/",
     "private": true,
     "scripts": {
         "clean": "ionic-app-scripts clean",
@@ -60,11 +60,12 @@
         "typescript": "2.3.4"
     },
     "cordovaPlugins": [
-        "cordova-plugin-statusbar",
-        "cordova-plugin-console",
-        "cordova-plugin-whitelist",
         "cordova-plugin-device",
         "cordova-plugin-splashscreen",
+        "cordova-plugin-statusbar",
+        "cordova-plugin-whitelist",
+        "cordova-plugin-file",
+        "cordova-plugin-file-transfer",
         "ionic-plugin-keyboard"
     ],
     "cordovaPlatforms": [],
@@ -75,9 +76,9 @@
             "cordova-plugin-splashscreen": {},
             "cordova-plugin-statusbar": {},
             "cordova-plugin-whitelist": {},
-            "ionic-plugin-keyboard": {},
+            "cordova-plugin-file": {},
             "cordova-plugin-file-transfer": {},
-            "cordova-plugin-file": {}
+            "ionic-plugin-keyboard": {}
         },
         "platforms": [
             "android",

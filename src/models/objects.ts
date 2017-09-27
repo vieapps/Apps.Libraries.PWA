@@ -50,18 +50,17 @@ export namespace AppModels {
 		WishList = new Array<string>();
 		Libraries = new Array<string>();
 		
-		Status = "";
 		Joined = new Date();
 		LastAccess = new Date();
 
 		IsOnline = false;
-		Title = "";
 		FullAddress = "";
-
+		ANSITitle = "";
+		ANSIAddress = "";
+		
 		constructor() {
 			super();
 			this.Gender = "NotProvided";
-			this.Status = "Activated";
 			this.Level = "Normal";
 			this.Reputation = "Unknown";
 		}
@@ -81,7 +80,9 @@ export namespace AppModels {
 				account.FullAddress = account.Address
 					+ (AppUtility.isNotEmpty(account.Province) ? (AppUtility.isNotEmpty(account.Address) ? ", " : "")
 					+ account.County + ", " + account.Province + ", " + account.Country : "");
-				account.Title = AppUtility.toANSI(account.Name + " " + account.FullAddress + " " + account.Email + " " + account.Mobile).toLowerCase();
+
+				account.ANSITitle = AppUtility.toANSI(account.Name + " " + account.Email + " " + account.Mobile).toLowerCase();
+				account.ANSIAddress = AppUtility.toANSI(account.FullAddress).toLowerCase();
 			});
 			return account;
 		}
@@ -90,7 +91,7 @@ export namespace AppModels {
 			if (AppUtility.isObject(data, true)) {
 				let account = data instanceof Account
 					? data as Account
-					: Account.deserialize(data);
+					: Account.deserialize(data, AppData.Accounts.getValue(data.ID));
 				if (AppData.Configuration.session.jwt != null && AppData.Configuration.session.jwt.uid == account.ID) {
 					account.IsOnline = true;
 				}
@@ -123,10 +124,10 @@ export namespace AppModels {
 		Counters: Collections.Dictionary<string, CounterInfo> = undefined;
 		RatingPoints: Collections.Dictionary<string, RatingPoint> = undefined;
 		Stocks: Collections.Dictionary<string, CounterBase> = undefined;
+		Cards: Collections.Dictionary<string, Card> = undefined;
 		LastUpdated = new Date();
 		
 		ANSITitle = "";
-		Cards = new Collections.Dictionary<string, Card>();
 		
 		constructor() {
 			super();
@@ -221,7 +222,7 @@ export namespace AppModels {
 		ID = "";
 		LibraryID = "";
 		BookID = "";
-		Stocks: Collections.Dictionary<string, CounterBase> = undefined;
+		Stocks = new Collections.Dictionary<string, CounterBase>();
 		Updated = new Date();
 		UpdatedID = "";
 

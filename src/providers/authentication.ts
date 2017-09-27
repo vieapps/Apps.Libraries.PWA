@@ -72,7 +72,7 @@ export class AuthenticationService {
 	/** Checks to see the account is can manage object or not (means act like administrator) */
 	canManage(accountID?: string, accountRoles?: Array<string>, privileges?: AppModels.Privileges) {
 		accountID = accountID || this.configSvc.getAccount().id;
-		accountRoles = accountRoles || this.configSvc.getAccount().roles as Array<string>;
+		accountRoles = accountRoles || this.configSvc.getAccount().roles;
 		privileges = privileges || new AppModels.Privileges();
 		return this.isInObjectRole(accountID, accountRoles, privileges.AdministrativeUsers, privileges.AdministrativeRoles);
 	}
@@ -80,7 +80,7 @@ export class AuthenticationService {
 	/** Checks to see the account is can moderate object or not (means act like moderator) */
 	canModerate(accountID?: string, accountRoles?: Array<string>, privileges?: AppModels.Privileges) {
 		accountID = accountID || this.configSvc.getAccount().id;
-		accountRoles = accountRoles || this.configSvc.getAccount().roles as Array<string>;
+		accountRoles = accountRoles || this.configSvc.getAccount().roles;
 		privileges = privileges || new AppModels.Privileges();
 		return this.isInObjectRole(accountID, accountRoles, privileges.ModerateUsers, privileges.ModerateRoles) || this.canManage(accountID, accountRoles, privileges);
 	}
@@ -88,7 +88,7 @@ export class AuthenticationService {
 	/** Checks to see the account is can edit object or not (means act like editor) */
 	canEdit(accountID?: string, accountRoles?: Array<string>, privileges?: AppModels.Privileges) {
 		accountID = accountID || this.configSvc.getAccount().id;
-		accountRoles = accountRoles || this.configSvc.getAccount().roles as Array<string>;
+		accountRoles = accountRoles || this.configSvc.getAccount().roles;
 		privileges = privileges || new AppModels.Privileges();
 		return this.isInObjectRole(accountID, accountRoles, privileges.EditableUsers, privileges.EditableRoles) || this.canModerate(accountID, accountRoles, privileges);
 	}
@@ -96,7 +96,7 @@ export class AuthenticationService {
 	/** Checks to see the account is can contribute object or not (means act like contributor) */
 	canContribute(accountID?: string, accountRoles?: Array<string>, privileges?: AppModels.Privileges) {
 		accountID = accountID || this.configSvc.getAccount().id;
-		accountRoles = accountRoles || this.configSvc.getAccount().roles as Array<string>;
+		accountRoles = accountRoles || this.configSvc.getAccount().roles;
 		privileges = privileges || new AppModels.Privileges();
 		return this.isInObjectRole(accountID, accountRoles, privileges.ContributiveUsers, privileges.ContributiveRoles) || this.canEdit(accountID, accountRoles, privileges);
 	}
@@ -104,7 +104,7 @@ export class AuthenticationService {
 	/** Checks to see the account is can view object or not (means act like viewer) */
 	canView(accountID?: string, accountRoles?: Array<string>, privileges?: AppModels.Privileges) {
 		accountID = accountID || this.configSvc.getAccount().id;
-		accountRoles = accountRoles || this.configSvc.getAccount().roles as Array<string>;
+		accountRoles = accountRoles || this.configSvc.getAccount().roles;
 		privileges = privileges || new AppModels.Privileges();
 		return this.isInObjectRole(accountID, accountRoles, privileges.ViewableUsers, privileges.ViewableRoles) || this.canContribute(accountID, accountRoles, privileges);
 	}
@@ -112,7 +112,7 @@ export class AuthenticationService {
 	/** Checks to see the account is can download object or not (means act like downloader) */
 	canDownload(accountID?: string, accountRoles?: Array<string>, privileges?: AppModels.Privileges) {
 		accountID = accountID || this.configSvc.getAccount().id;
-		accountRoles = accountRoles || this.configSvc.getAccount().roles as Array<string>;
+		accountRoles = accountRoles || this.configSvc.getAccount().roles;
 		privileges = privileges || new AppModels.Privileges();
 		return this.isInObjectRole(accountID, accountRoles, privileges.DownloadableUsers, privileges.DownloadableRoles) || this.canView(accountID, accountRoles, privileges);
 	}
@@ -651,7 +651,7 @@ export class AuthenticationService {
 
 		// update account
 		if (info.ObjectName == "Account") {
-			if (AppData.Configuration.session.account != null && AppData.Configuration.session.account.id == message.Data.ID) {
+			if (AppData.Configuration.session.account && AppData.Configuration.session.account.id == message.Data.ID) {
 				this.configSvc.updateAccount(message.Data);
 			}
 		}
@@ -659,7 +659,7 @@ export class AuthenticationService {
 		// got new access token, then need to update session
 		else if ((info.ObjectName == "Session")
 		&& AppData.Configuration.session.id == message.Data.ID
-		&& AppData.Configuration.session.account != null && AppData.Configuration.session.account.id == message.Data.UserID) {
+		&& AppData.Configuration.session.account && AppData.Configuration.session.account.id == message.Data.UserID) {
 			this.configSvc.updateSessionAsync(message.Data, () => {
 				AppUtility.isDebug() && console.warn("[Authentication]: Update session with the new token", AppData.Configuration.session);
 				this.configSvc.patchAccount();
@@ -669,7 +669,7 @@ export class AuthenticationService {
 
 		// update profile
 		else if (info.ObjectName == "Profile") {
-			if (AppData.Configuration.session.account != null && AppData.Configuration.session.account.id == message.Data.ID) {
+			if (AppData.Configuration.session.account && AppData.Configuration.session.account.id == message.Data.ID) {
 				this.updateProfileAsync(message.Data);
 			}
 			else {
@@ -680,13 +680,12 @@ export class AuthenticationService {
 		// update status
 		else if (info.ObjectName == "Status") {
 			let account = AppData.Accounts.getValue(message.Data.UserID);
-			if (account != undefined) {
+			if (account) {
 				account.IsOnline = message.Data.IsOnline;
 				account.LastAccess = new Date();
 			}
-			if (AppData.Configuration.session.account != null
-				&& AppData.Configuration.session.account.id == message.Data.UserID
-				&& AppData.Configuration.session.account.profile != null) {
+			if (AppData.Configuration.session.account && AppData.Configuration.session.account.profile
+			&& AppData.Configuration.session.account.id == message.Data.UserID) {
 				AppData.Configuration.session.account.profile.LastAccess = new Date();
 			}
 		}

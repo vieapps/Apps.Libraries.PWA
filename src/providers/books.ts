@@ -1,6 +1,7 @@
 import { Injectable } from "@angular/core";
 import { Http } from "@angular/http";
 import { List } from "linqts";
+import * as Collections from "typescript-collections";
 import "rxjs/add/operator/map";
 
 import { AppUtility } from "../helpers/utility";
@@ -107,8 +108,7 @@ export class BooksService {
 	}
 
 	updateCounters(id: string, action?: string, onCompleted?: () => void) {
-		AppData.Books.getValue(id) != undefined
-		&& AppRTU.isReady()
+		AppData.Books.getValue(id) && AppRTU.isReady()
 		&& AppRTU.call("libraries", "book", "GET", {
 			"object-identity": "counters",
 			"id": id,
@@ -117,13 +117,43 @@ export class BooksService {
 		onCompleted != undefined && onCompleted();
 	}
 
-	setCounters(info: any, onCompleted?: () => void) {
-		var book = AppUtility.isObject(info, true)
-			? AppData.Books.getValue(info.ID)
+	getCards(id: string, action?: string, onCompleted?: () => void) {
+		AppData.Books.getValue(id) && AppRTU.isReady()
+		&& AppRTU.call("libraries", "book", "GET", {
+			"object-identity": "cards",
+			"id": id,
+			"action": action || "View"
+		});
+		onCompleted != undefined && onCompleted();
+	}
+
+	updateStatistics(data: any, onCompleted?: () => void) {
+		var book = AppUtility.isObject(data, true)
+			? AppData.Books.getValue(data.ID)
 			: undefined;
 
-		if (book != undefined && AppUtility.isArray(info.Counters)) {
-			new List<any>(info.Counters).ForEach(c => book.Counters.setValue(c.Type, AppModels.CounterInfo.deserialize(c)));
+		if (book) {
+			// counters
+			if (AppUtility.isArray(data.Counters)) {
+				new List<any>(data.Counters).ForEach(c => book.Counters.setValue(c.Type, AppModels.CounterInfo.deserialize(c)));
+			}
+
+			// rating points
+			if (AppUtility.isArray(data.RatingPoints)) {
+				new List<any>(data.RatingPoints).ForEach(r => book.RatingPoints.setValue(r.Type, AppModels.RatingPoint.deserialize(r)));
+			}
+			
+			// stocks
+			if (AppUtility.isArray(data.Stocks)) {
+				new List<any>(data.Stocks).ForEach(c => book.Stocks.setValue(c.Type, AppModels.CounterBase.deserialize(c)));
+			}
+
+			// cards
+			if (AppUtility.isArray(data.Cards)) {
+				book.Cards = book.Cards || new Collections.Dictionary<string, AppModels.Card>();
+				new List<any>(data.Cards).ForEach(c => book.Cards.setValue(c.ID, AppModels.Card.deserialize(c)));
+			}
+
 			AppEvents.broadcast("BookStatisticsAreUpdated", { ID: book.ID });
 		}
 
@@ -197,9 +227,9 @@ export class BooksService {
 			AppModels.Book.update(message.Data);
 		}
 
-		// counters
-		else if (info.ObjectName == "Book#Counters") {
-			this.setCounters(message.Data);
+		// statistics
+		else if (info.ObjectName == "Book#Counters" || info.ObjectName == "Book#Cards" || info.ObjectName == "Book#Statistics") {
+			this.updateStatistics(message.Data);
 		}
 
 		// delete

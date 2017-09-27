@@ -4,9 +4,6 @@
       <ion-icon name="menu"></ion-icon>
     </button>
 		<ion-buttons right>
-			<button ion-button icon-only clear (click)="addBook()" *ngIf="configSvc.isAuthenticated()">
-				<ion-icon name="add"></ion-icon>
-			</button>
 			<button ion-button icon-left (click)="borrowBook()">
 				<ion-icon name="bookmarks"></ion-icon>
 				Mượn
@@ -16,7 +13,23 @@
 	</ion-navbar>
 </ion-header>
 
-<ion-content>
+<ion-footer [hidden]="!canAddBook()">
+	<ion-toolbar>
+		<ion-buttons left>
+			<button ion-button icon-left (click)="addBook()">
+				<ion-icon name="add"></ion-icon>
+				Thêm sách vào thư viện
+			</button>
+		</ion-buttons>
+		<ion-buttons right>
+			<button ion-button icon-only (click)="showActions()">
+				<ion-icon name="more"></ion-icon>
+			</button>
+		</ion-buttons>
+	</ion-toolbar>
+</ion-footer>
+
+<ion-content [class.no-footer]="!canAddBook()">
 
 	<h1 padding>
 		{{info.book.Title}}
@@ -24,6 +37,18 @@
 	
 	<div padding class="info">
 		<rating [(ngModel)]="info.rating" [max]="5" [readonly]="true" [float]="true"></rating>
+		<span>
+			<span class="available" [class.not]="info.stocks.libraries < 1">
+				{{info.stocks.libraries | number}}
+			</span>
+			<ion-icon name="albums"></ion-icon>
+		</span>
+		<span>
+			<span class="available" [class.not]="info.stocks.available < 1">
+				{{info.stocks.available | number}}
+			</span>
+			<ion-icon name="book"></ion-icon>
+		</span>
 	</div>
 
 	<div>
@@ -86,7 +111,7 @@
 				{{info.book.PublishedDate}}
 			</label>
 		</ion-item>
-		<ion-item>
+		<ion-item *ngIf="info.book.CoverType != ''">
 			<span>
 				Kiểu bìa:
 			</span>
@@ -177,7 +202,7 @@
 				</li>
 			</ul>
 		</ion-item>
-		<ion-item *ngIf="info.borrow">
+		<ion-item *ngIf="info.borrowed">
 			<span>
 				Số lượt mượn:
 			</span>
@@ -187,7 +212,7 @@
 					Tổng số:
 					</span>
 					<span>
-						{{info.borrow.Total}}
+						{{info.borrowed.Total}}
 					</span>
 				</li>
 				<li>
@@ -195,7 +220,7 @@
 					Trong tháng:
 					</span>
 					<span>
-							{{info.borrow.Month}}
+							{{info.borrowed.Month}}
 					</span>
 				</li>
 				<li>
@@ -203,7 +228,7 @@
 					Trong tuần:
 					</span>
 					<span>
-							{{info.borrow.Week}}
+							{{info.borrowed.Week}}
 					</span>
 				</li>
 			</ul>

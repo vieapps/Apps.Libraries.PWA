@@ -70,9 +70,9 @@
 				<ion-icon item-left name="time"></ion-icon>
 				Đăng ký: {{info.library.Registered | date: 'h:mm a @ d/M/y'}}
 			</ion-item>
-			<ion-item>
+			<ion-item *ngIf="info.library.Intro != ''">
 				<ion-icon item-left name="information-circle"></ion-icon>
-				<span class="intro" [innerHtml]="getIntroHtml()" *ngIf="info.library.Intro != ''"></span>
+				<span class="intro" [innerHtml]="getIntroHtml()"></span>
 			</ion-item>
 			<ion-item>
 			<ion-icon item-left name="link"></ion-icon>

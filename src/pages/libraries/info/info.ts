@@ -18,7 +18,7 @@ import { ConfigurationService } from "../../../providers/configuration";
 import { AuthenticationService } from "../../../providers/authentication";
 import { LibrariesService } from "../../../providers/libraries";
 
-//import { AddBookPage } from "../../books/add/add";
+import { AddBookPage } from "../../books/add/add";
 
 @Component({
 	selector: "page-library-info",
@@ -66,10 +66,10 @@ export class LibraryInfoPage {
 			css: ""
 		},
 		id: "",
-		library: undefined,
+		library: new AppModels.Library(),
 		avatar: {
 			current: "",
-			uploaded: undefined
+			uploaded: ""
 		},
 		rating: 0.0,
 		address: {
@@ -135,22 +135,6 @@ export class LibraryInfoPage {
 		// library info
 		if (this.info.state.mode == "Register") {
 			this.info.title = "Đăng ký thư viện";
-			this.info.library = {
-				Title: "",
-				Alias: "",
-				Contact: {
-					Name: "",
-					Phone: "",
-					Email: "",
-					Address: "",
-					County: "",
-					Province: "",
-					Country: "",
-					PostalCode: "",
-					Notes: "",
-					GPSLocation: ""
-				}
-			};
 		}
 		else {
 			this.initializeLibrary(this.navParams.get("ID"));
@@ -281,29 +265,31 @@ export class LibraryInfoPage {
 			});
 		}
 
-		new List(this.info.library.Administrators as Array<string>).ForEach((id) => {
-			let account = AppData.Accounts.getValue(id);
-			if (account != undefined) {
-				this.privileges.edit.Administrators.push(account);
-			}
-			else {
-				this.authSvc.getProfileAsync(true, id, () => {
-					this.privileges.edit.Administrators.push(AppData.Accounts.getValue(id));
-				});
-			}
-		});
+		new List(this.info.library.Privileges ? this.info.library.Privileges.AdministrativeUsers.toArray() : [])
+			.ForEach(id => {
+				let account = AppData.Accounts.getValue(id);
+				if (account) {
+					this.privileges.edit.Administrators.push(account);
+				}
+				else {
+					this.authSvc.getProfileAsync(true, id, () => {
+						this.privileges.edit.Administrators.push(AppData.Accounts.getValue(id));
+					});
+				}
+			});
 		
-		new List(this.info.library.Moderators as Array<string>).ForEach((id) => {
-			let account = AppData.Accounts.getValue(id);
-			if (account != undefined) {
-				this.privileges.edit.Moderators.push(account);
-			}
-			else {
-				this.authSvc.getProfileAsync(true, id, () => {
-					this.privileges.edit.Moderators.push(AppData.Accounts.getValue(id));
-				});
-			}
-		});
+		new List(this.info.library.Privileges ? this.info.library.Privileges.ModerateUsers.toArray() : [])
+			.ForEach(id => {
+				let account = AppData.Accounts.getValue(id);
+				if (account != undefined) {
+					this.privileges.edit.Moderators.push(account);
+				}
+				else {
+					this.authSvc.getProfileAsync(true, id, () => {
+						this.privileges.edit.Moderators.push(AppData.Accounts.getValue(id));
+					});
+				}
+			});
 	}
 
 	selectAccount(account: CompleterItem) {
@@ -354,7 +340,7 @@ export class LibraryInfoPage {
 		this.info.state.processing = false;
 		this.setBackButton(true);
 		this.info.state.mode = "Info";
-		this.info.title = "Thư viện: " + this.info.library.Name;
+		this.info.title = "Thư viện: " + this.info.library.Title;
 	}
 
 	exit() {
@@ -556,7 +542,7 @@ export class LibraryInfoPage {
 
 	// open page to add a book
 	doAddBook() {
-		//this.navCtrl.push(AddBookPage, { LibraryID: this.info.library.ID });
+		this.navCtrl.push(AddBookPage, { LibraryID: this.info.library.ID });
 	}
 
 }

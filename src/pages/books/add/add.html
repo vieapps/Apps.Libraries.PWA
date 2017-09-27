@@ -1,0 +1,91 @@
+<ion-header>
+	<ion-navbar hideBackButton="true">
+		<ion-buttons left>
+			<button ion-button icon-only (click)="exit()">
+				<ion-icon name="close"></ion-icon>
+			</button>
+		</ion-buttons>
+		<ion-buttons right *ngIf="this.info.book">
+			<button ion-button icon-left (click)="update()">
+				<ion-icon name="cloud-upload"></ion-icon>
+				Cập nhật
+			</button>
+		</ion-buttons>
+		<ion-title>{{info.title}}</ion-title>
+	</ion-navbar>
+</ion-header>
+
+<ion-content padding>
+
+	<div style="margin-bottom:16px" *ngIf="info.state.adding">
+		<ion-item class="item-label-floating completer-container">
+			<ng2-completer #search name="addresses" [inputClass]="info.state.css" inputId="book"
+				placeholder="Nhập tên sách, tác giả, ... để tìm kiếm (không dấu cũng OK)"
+				textSearching="tìm kiếm..." pause="450" clearSelected="true" minSearchLength="3"
+				[datasource]="searchCompleter"(selected)="select($event)"></ng2-completer>
+		</ion-item>
+	</div>
+
+	<div *ngIf="info.book">
+
+		<div class="info">
+			<ion-thumbnail item-left>
+				<img [src]="info.book.Cover"/>
+			</ion-thumbnail>
+			<div>
+				{{info.book.Category}}
+			</div>
+			<h2>
+				{{info.book.Title}}
+			</h2>
+			<div *ngIf="info.book.Author != ''">
+				Tác giả: {{info.book.Author}}
+				<span [hidden]="info.book.Translator == ''">
+					- Dịch giả: {{info.book.Translator}}
+				</span>
+			</div>
+			<div *ngIf="info.book.Publisher != ''">
+				NXB: {{info.book.Publisher}}
+				<span [hidden]="info.book.Producer == ''">
+					- Đơn vị SX: {{info.book.Producer}}
+				</span>
+			</div>
+		</div>
+
+		<div class="stocks">
+			<ion-item>
+				<ion-label>Thư viện:</ion-label>
+				<ion-select [(ngModel)]="info.library">
+					<ion-option [value]="lib.id" *ngFor="let lib of info.libraries">{{lib.name}}</ion-option>
+				</ion-select>
+			</ion-item>
+			<ion-item *ngIf="info.stocks[info.library]">
+				<ion-label>Tổng số cuốn:</ion-label>
+				<ion-input #all required text-right type="number" min="0" [(ngModel)]="info.stocks[info.library].all" (change)="onChange()"></ion-input>
+			</ion-item>
+			<ion-item *ngIf="info.stocks[info.library]">
+				<ion-label>Tổng số có thể cho mượn:</ion-label>
+				<ion-input #available required text-right type="number" min="0" [(ngModel)]="info.stocks[info.library].available" (change)="onChange()"></ion-input>
+			</ion-item>			
+		</div>
+
+		<ion-list class="current" *ngIf="info.libraries.length > 1">
+			<ion-list-header>
+				Số lượng theo thư viện
+			</ion-list-header>
+			<ion-item *ngFor="let lib of info.libraries">
+				<label>
+					{{lib.name}}
+				</label>
+				<span class="available">
+					{{info.stocks[lib.id] ? info.stocks[lib.id].available : 0}}
+				</span>
+				<span class="all">
+					{{info.stocks[lib.id] ? info.stocks[lib.id].all : 0}}
+				</span>
+			</ion-item>
+		</ion-list>
+
+	</div>
+
+</ion-content>
