@@ -1,7 +1,7 @@
 import { Component, ViewChild } from "@angular/core";
 import { NavController, NavParams, AlertController } from "ionic-angular";
 import { Keyboard } from "@ionic-native/keyboard";
-import { CompleterItem } from "ng2-completer";
+import { CompleterItem, CompleterCmp } from "ng2-completer";
 import { List } from "linqts";
 
 import { AppUtility } from "../../../helpers/utility";
@@ -49,6 +49,7 @@ export class AddBookPage {
 	};
 
 	// controls
+	@ViewChild("search") searchCtrl: CompleterCmp;
 	@ViewChild("all") stockAllCtrl;
 	@ViewChild("available") stockAvailableCtrl;
 	searchCompleter: AppAPI.CompleterCustomSearch = undefined;
@@ -62,6 +63,10 @@ export class AddBookPage {
 		return this.configSvc.isAuthenticated() && AppData.Configuration.session.account.profile.Libraries.length > 0;
 	}
 
+	ionViewDidEnter() {
+		this.setFocus();
+	}
+
 	initialize() {
 		this.info.library.id = this.navParams.get("LibraryID") as string;
 		this.info.library.current = AppUtility.isNotEmpty(this.info.library.id)
@@ -70,15 +75,12 @@ export class AddBookPage {
 		this.info.book = AppData.Books.getValue(this.navParams.get("BookID") as string);
 
 		AppUtility.setTimeout(async () => {
-			await Promise.all(new List<string>(AppData.Configuration.session.account.profile.Libraries)
-				.Select(id => {
-					return this.libsSvc.getAsync(id,
-						() => {
-							let lib = AppData.Libraries.getValue(id);
-							this.info.libraries.push({ id: lib.ID, title: lib.Title });
-						}
-					)
-				})
+			await Promise.all(new List(AppData.Configuration.session.account.profile.Libraries)
+				.Select(id => this.libsSvc.getAsync(id, () => {
+						let lib = AppData.Libraries.getValue(id);
+						this.info.libraries.push({ id: lib.ID, title: lib.Title });
+					})
+				)
 				.ToArray()
 			);
 			this.prepare();
@@ -87,9 +89,7 @@ export class AddBookPage {
 
 	prepare() {
 		if (this.info.book) {
-			this.showInfo(() => {
-				this.setFocus();
-			});
+			this.showInfo();
 		}
 		else {
 			this.info.title = "Cập nhật sách vào thư viện";
@@ -100,28 +100,28 @@ export class AddBookPage {
 					return "libraries/book/search?x-request=" + AppUtility.getBase64UrlParam(AppData.buildRequest({ Query: term }));
 				},
 				(data: any) => {
-					return new List<any>(data.Data.Objects)
-						.Select(b => {
-							return {
-								title: b.Title,
-								description: b.Author + " (" + b.Publisher + " - " + b.Producer + ")",
-								image: AppUtility.getCoverImage(b.Cover),
-								originalObject: AppModels.Book.deserialize(b)
-							} as CompleterItem;
-						})
-						.ToArray();
+					let items = new Array<CompleterItem>();
+					new List<any>(data.Data.Objects).ForEach(b => {
+						if (!AppData.Books.containsKey(b.ID)) {
+							AppModels.Book.update(b);
+							this.booksSvc.getCards(b.ID);
+						}
+						let book = AppData.Books.getValue(b.ID);
+						items.push({
+								title: book.Title,
+								description: book.Author + " (" + book.Publisher + " - " + book.Producer + ")",
+								image: AppUtility.getCoverImage(book.Cover),
+								originalObject: book
+						} as CompleterItem);
+					});
+					return items;
 				}
 			);
 		}
 	}
 
 	setFocus() {
-		if (this.info.book) {
-			AppUtility.focus(this.stockAllCtrl, this.keyboard, 456);
-		}
-		else {
-
-		}
+		AppUtility.focus(this.info.book ? this.stockAllCtrl : this.searchCtrl.ctrInput, this.keyboard, 345);
 	}
 
 	select(book: CompleterItem) {
@@ -143,7 +143,7 @@ export class AddBookPage {
 		if (!this.info.library.current) {
 			this.info.library.id = this.info.library.id
 				? this.info.library.id
-				: this.info.book.Cards.size() > 0
+				: this.info.book.Cards && this.info.book.Cards.size() > 0
 					? this.info.book.Cards.values()[0].LibraryID
 					: this.info.libraries[0].id;
 			this.info.library.current = AppData.Libraries.getValue(this.info.library.id);
@@ -151,14 +151,16 @@ export class AddBookPage {
 		
 		this.info.stocks = {};
 		new List(this.info.libraries).ForEach(i => {
-			let card = new List(this.info.book.Cards.values()).FirstOrDefault(c => c.LibraryID == i.id);
+			let card = this.info.book.Cards
+				? new List(this.info.book.Cards.values()).FirstOrDefault(c => c.LibraryID == i.id)
+				: undefined;
 			this.info.stocks[i.id] = {
-				all: card != undefined
+				all: card && card.Stocks.containsKey("All")
 					? card.Stocks.getValue("All").Total
 					: this.info.state.adding && i.id == this.info.library.id
 						? 1
 						: 0,
-				available: card != undefined
+				available: card && card.Stocks.containsKey("Available")
 					? card.Stocks.getValue("Available").Total
 					: this.info.state.adding && i.id == this.info.library.id
 						? 1
@@ -170,12 +172,12 @@ export class AddBookPage {
 	}
 
 	onChange() {
-		var all = this.info.stocks[this.info.library.id].all != undefined
+		var all = this.info.stocks[this.info.library.id].all
 			? +this.info.stocks[this.info.library.id].all
 			: 0;
 		this.info.stocks[this.info.library.id].all = all;
 
-		var available = this.info.stocks[this.info.library.id].available != undefined
+		var available = this.info.stocks[this.info.library.id].available
 			? +this.info.stocks[this.info.library.id].available
 			: 0;
 		this.info.stocks[this.info.library.id].available = available > all ? all : available;
@@ -188,20 +190,44 @@ export class AddBookPage {
 	update() {
 		var info = {
 			BookID: this.info.book.ID,
-			Stocks: new Array<any>()
+			Stocks: {}
 		};
 		for (let id in this.info.stocks) {
 			let stock = this.info.stocks[id];
-			info.Stocks.push({
-				LibraryID: id,
+			info.Stocks[id] = {
 				All: stock.all,
 				Available: stock.available
-			});
+			};
 		}
-		/*
+
 		this.libsSvc.updateCardsAsync(info,
 			() => {
-				this.exit();
+				if (this.navParams.get("BookID")) {
+					this.exit();
+				}
+				else {
+					this.alertCtrl.create({
+						title: "Cập nhật",
+						message: "Hoàn thành. Tiếp tục cập nhật sách khác?",
+						enableBackdropDismiss: false,
+						buttons: [{
+							text: "Không",
+							role: "cancel",
+							handler: () => {
+								this.exit();
+							}
+						},
+						{
+							text: "Tiếp tục",
+							handler: () => {
+								this.info.book = undefined;
+								this.info.title = "Cập nhật sách vào thư viện";
+								this.info.state.adding = true;
+								this.setFocus();
+							}
+						}]
+					}).present();
+				}
 			},
 			(e: any) => {
 				this.alertCtrl.create({
@@ -214,7 +240,6 @@ export class AddBookPage {
 				}).present();
 			}
 		);
-		*/
 	}
 
 }

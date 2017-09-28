@@ -27,6 +27,9 @@
         },
         "cordova-plugin-file": {
             "PACKAGE_NAME": "net.vieapps.apps.books"
+        },
+        "cordova-plugin-ionic-webview": {
+            "PACKAGE_NAME": "net.vieapps.apps.libraries"
         }
     },
     "dependent_plugins": {

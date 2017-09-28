@@ -352,6 +352,25 @@ export class LibrariesService {
 		}
 	}
 
+	async updateCardsAsync(info: any, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+		try {
+			let response = await AppAPI.PostAsync("libraries/cards", info);
+			let data = response.json();
+			if (data.Status == "OK") {
+				onNext != undefined && onNext(data);
+			}
+			else {
+				console.error("[Libraries]: Error occurred while updating librarys' cards");
+				AppUtility.isObject(data.Error, true) && console.log("[" + data.Error.Type + "]: " + data.Error.Message);
+				onError != undefined && onError(data);
+			}
+		}
+		catch (e) {
+			console.error("[Libraries]: Error occurred while updating librarys' cards", e);
+			onError != undefined && onError(e);
+		}
+	}
+
 	processRTU(message: any) {
 		// stop on error message
 		if (message.Type == "Error") {

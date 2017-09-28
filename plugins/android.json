@@ -27,6 +27,9 @@
         },
         "ionic-plugin-keyboard": {
             "PACKAGE_NAME": "net.vieapps.apps.libraries"
+        },
+        "cordova-plugin-ionic-webview": {
+            "PACKAGE_NAME": "net.vieapps.apps.libraries"
         }
     },
     "dependent_plugins": {

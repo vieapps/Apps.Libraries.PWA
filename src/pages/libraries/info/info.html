@@ -6,13 +6,13 @@
 			</button>
 		</ion-buttons>
 		<ion-buttons right *ngIf="info.state.mode != 'Info'">
-			<button ion-button clear [hidden]="info.state.processing || info.state.mode != 'Register'" (click)="doRegister(form)">
+			<button ion-button clear [hidden]="info.state.processing || info.state.mode != 'Register'" (click)="register(form)">
 				Đăng ký
 			</button>
-			<button ion-button clear [hidden]="info.state.processing || info.state.mode != 'Update'" (click)="doUpdate(form)">
+			<button ion-button clear [hidden]="info.state.processing || info.state.mode != 'Update'" (click)="update(form)">
 				Lưu
 			</button>
-			<button ion-button clear [hidden]="info.state.processing || info.state.mode != 'SetPrivileges'" (click)="doSetPrivileges()">
+			<button ion-button clear [hidden]="info.state.processing || info.state.mode != 'SetPrivileges'" (click)="setPrivileges()">
 				Đặt quyền
 			</button>
 		</ion-buttons>
@@ -20,10 +20,10 @@
 	</ion-navbar>
 </ion-header>
 
-<ion-footer *ngIf="info.state.mode == 'Info' && isModerator()">
+<ion-footer *ngIf="info.state.mode == 'Info' && (canModerate() || authSvc.isAdministrator())">
 	<ion-toolbar>
-		<ion-buttons left>
-			<button ion-button icon-left (click)="doAddBook()">
+		<ion-buttons left *ngIf="canModerate()">
+			<button ion-button icon-left (click)="addBook()">
 				<ion-icon name="add"></ion-icon>
 				Thêm sách vào thư viện
 			</button>
@@ -36,7 +36,7 @@
 	</ion-toolbar>
 </ion-footer>
 
-<ion-content padding [class.no-footer]="info.state.mode != 'Info' || !isModerator()">
+<ion-content padding [class.no-footer]="info.state.mode != 'Info' || !(canModerate() || authSvc.isAdministrator())">
 
 	<div *ngIf="info.state.mode == 'Info'">
 		<figure>

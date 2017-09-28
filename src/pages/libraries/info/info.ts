@@ -78,7 +78,15 @@ export class LibraryInfoPage {
 		},
 		isAppleOS: AppUtility.isAppleOS()
 	};
-	privileges: { current: AppModels.Privileges, edit: any } = { current: undefined, edit: undefined };
+	privileges = { 
+		current: undefined as AppModels.Privileges,
+		edit: {
+			Processing: "",
+			Owner: undefined as AppModels.Account,
+			Administrators: undefined as Array<AppModels.Account>,
+			Moderators: undefined as Array<AppModels.Account>
+		}
+	};
 	addressCompleter: CompleterData = undefined;
 	accountCompleter: AppAPI.CompleterCustomSearch = undefined;
 	cropper = {
@@ -111,8 +119,8 @@ export class LibraryInfoPage {
 		AppEvents.on(
 			"LibraryIsUpdated",
 			(info: any) => {
-				if (this.info.library != undefined && this.info.library.ID == info.args.ID) {
-					this.initializeLibrary(info.args.ID);
+				if (this.info.library && this.info.library.ID == info.args.ID) {
+					this.prepare(info.args.ID);
 				}
 			},
 			"EventHandlerToUpdateLibraryInfoOnPage"
@@ -137,7 +145,7 @@ export class LibraryInfoPage {
 			this.info.title = "Đăng ký thư viện";
 		}
 		else {
-			this.initializeLibrary(this.navParams.get("ID"));
+			this.prepare(this.navParams.get("ID"));
 		}
 
 		// search address
@@ -173,19 +181,16 @@ export class LibraryInfoPage {
 		);
 	}
 
-	initializeLibrary(id: string) {
+	prepare(id: string) {
 		let library = AppData.Libraries.getValue(id);
+
+		this.info.library = AppUtility.clone(library, ["Privileges", "Counters", "RatingPoints", "Stocks", "Books"]);
 		this.privileges.current = library.Privileges;
-		this.info.library = AppUtility.clone(library, ["Privileges"]);
 
-		this.info.avatar.current = AppUtility.getAvatarImage(library);
 		this.info.title = "Thư viện: " + library.Title;
-
-		var rating = library.RatingPoints != undefined
-			? library.RatingPoints.getValue("General")
-			: undefined;
-		this.info.rating = rating != undefined
-			? rating.Average
+		this.info.avatar.current = AppUtility.getAvatarImage(library);
+		this.info.rating = library.RatingPoints && library.RatingPoints.containsKey("General")
+			? library.RatingPoints.getValue("General").Average
 			: 0;
 
 		if (!library.Books) {
@@ -196,19 +201,20 @@ export class LibraryInfoPage {
 	// event handlers
 	showActions() {
 		var actionSheet = this.actionSheetCtrl.create({
-			enableBackdropDismiss: true,
-			buttons: [
-				{
-					text: "Xử lý yêu cầu mượn/trả",
-					icon: this.info.isAppleOS ? undefined : "analytics",
-					handler: () => {
-						
-					}
-				}
-			]
+			enableBackdropDismiss: true
 		});
 
-		if (this.isAdministrator()) {
+		if (this.canModerate()) {
+			actionSheet.addButton({
+				text: "Xử lý yêu cầu mượn/trả",
+				icon: this.info.isAppleOS ? undefined : "analytics",
+				handler: () => {
+					this.openTransactions();					
+				}
+			});
+		}
+
+		if (this.canManage()) {
 			actionSheet.addButton({
 				text: "Cập nhật",
 				icon: this.info.isAppleOS ? undefined : "create",
@@ -216,6 +222,9 @@ export class LibraryInfoPage {
 					this.openUpdate();
 				}
 			});
+		}
+
+		if (this.canManage() || this.authSvc.isAdministrator()) {
 			actionSheet.addButton({
 				text: "Đặt quyền truy cập",
 				icon: this.info.isAppleOS ? undefined : "settings",
@@ -258,18 +267,19 @@ export class LibraryInfoPage {
 			Moderators: []
 		};
 
-		this.privileges.edit.Owner = AppData.Accounts.getValue(this.info.library.OwnerID);
-		if (this.privileges.edit.Owner == undefined) {
+		if (AppData.Accounts.containsKey(this.info.library.OwnerID)) {
+			this.privileges.edit.Owner = AppData.Accounts.getValue(this.info.library.OwnerID);
+		}
+		else {
 			this.authSvc.getProfileAsync(true, this.info.library.OwnerID, () => {
 				this.privileges.edit.Owner = AppData.Accounts.getValue(this.info.library.OwnerID);
 			});
 		}
 
-		new List(this.info.library.Privileges ? this.info.library.Privileges.AdministrativeUsers.toArray() : [])
+		new List(this.privileges.current ? this.privileges.current.AdministrativeUsers.toArray() : [])
 			.ForEach(id => {
-				let account = AppData.Accounts.getValue(id);
-				if (account) {
-					this.privileges.edit.Administrators.push(account);
+				if (AppData.Accounts.containsKey(id)) {
+					this.privileges.edit.Administrators.push(AppData.Accounts.getValue(id));
 				}
 				else {
 					this.authSvc.getProfileAsync(true, id, () => {
@@ -278,11 +288,10 @@ export class LibraryInfoPage {
 				}
 			});
 		
-		new List(this.info.library.Privileges ? this.info.library.Privileges.ModerateUsers.toArray() : [])
+		new List(this.privileges.current ? this.privileges.current.ModerateUsers.toArray() : [])
 			.ForEach(id => {
-				let account = AppData.Accounts.getValue(id);
-				if (account != undefined) {
-					this.privileges.edit.Moderators.push(account);
+				if (AppData.Accounts.containsKey(id)) {
+					this.privileges.edit.Moderators.push(AppData.Accounts.getValue(id));
 				}
 				else {
 					this.authSvc.getProfileAsync(true, id, () => {
@@ -309,12 +318,13 @@ export class LibraryInfoPage {
 	}
 
 	removeAccount(mode: string, id: string) {
-		var accounts = this.privileges.edit.Processing == "Administrator"
-			? this.privileges.edit.Administrators
-			: this.privileges.edit.Moderators;
-		var index = AppUtility.find<AppModels.Account>(accounts, a => a.ID == id);
-		if (index > -1) {
-			accounts.splice(index, 1);
+		if (mode == "Administrator") {
+			this.privileges.edit.Administrators
+				= new List(this.privileges.edit.Administrators).Where(a => a.ID != id).ToArray();
+		}
+		else {
+			this.privileges.edit.Moderators
+				= new List(this.privileges.edit.Moderators).Where(a => a.ID != id).ToArray();
 		}
 	}
 
@@ -359,17 +369,16 @@ export class LibraryInfoPage {
 		return AppUtility.getAvatarImage(account);
 	}
 
-	isAdministrator() {
-		return this.info.library != undefined 
-			? this.authSvc.isSystemAdministrator()
-				|| this.info.library.OwnerID == AppData.Configuration.session.account.id
+	canManage(includeSystemAdministrator?: boolean) {
+		return this.info.library
+			? this.info.library.OwnerID == AppData.Configuration.session.account.id
 				|| this.authSvc.canManage(undefined, undefined, this.privileges.current)
 			: false;
 	}
 
-	isModerator() {
-		return this.info.library != undefined 
-			? this.isAdministrator() || this.authSvc.canModerate(undefined, undefined, this.privileges.current)
+	canModerate() {
+		return this.info.library
+			? this.canManage() || this.authSvc.canModerate(undefined, undefined, this.privileges.current)
 			: false;
 	}
 
@@ -423,7 +432,7 @@ export class LibraryInfoPage {
 	}
 
 	// register
-	doRegister(form: NgForm) {
+	register(form: NgForm) {
 		this.info.state.valid = this.isValidInfo(form);
 		if (this.info.state.valid) {
 			this.info.state.processing = true;
@@ -436,7 +445,7 @@ export class LibraryInfoPage {
 						"Đăng ký",
 						"Thư viện đã được đăng ký thành công!",
 						() => {
-							this.initializeLibrary(data.Data.ID);
+							this.prepare(data.Data.ID);
 							this.cancelUpdate();
 						}
 					);
@@ -449,7 +458,7 @@ export class LibraryInfoPage {
 	}
 
 	// update
-	doUpdate(form: NgForm) {
+	update(form: NgForm) {
 		this.info.state.valid = this.isValidInfo(form);
 		if (this.info.state.valid) {
 			this.info.state.processing = true;
@@ -462,7 +471,7 @@ export class LibraryInfoPage {
 				: "";
 				this.librariesSvc.updateAsync(this.info.library,
 					() => {
-						this.initializeLibrary(this.info.library.ID);
+						this.prepare(this.info.library.ID);
 						this.cancelUpdate();
 					},
 					(error: any) => {
@@ -518,7 +527,8 @@ export class LibraryInfoPage {
 		reader.readAsDataURL(file);
 	}
 
-	doSetPrivileges() {
+	// update privileges
+	setPrivileges() {
 		var info = {
 			ID: this.info.library.ID,
 			Administrators: new List<AppModels.Account>(this.privileges.edit.Administrators)
@@ -531,7 +541,7 @@ export class LibraryInfoPage {
 		this.info.state.processing = true;
 		this.librariesSvc.updatePrivilegesAsync(info,
 			(data: any) => {
-				this.initializeLibrary(this.info.library.ID);
+				this.prepare(this.info.library.ID);
 				this.cancelUpdate();
 			},
 			(error: any) => {
@@ -540,9 +550,14 @@ export class LibraryInfoPage {
 		);
 	}
 
-	// open page to add a book
-	doAddBook() {
+	// add a book
+	addBook() {
 		this.navCtrl.push(AddBookPage, { LibraryID: this.info.library.ID });
+	}
+
+	// process the transactions
+	openTransactions() {
+
 	}
 
 }

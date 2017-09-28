@@ -46,21 +46,12 @@ export class BookInfoPage {
 	// events
 	ionViewDidLoad() {
 		var id = this.navParams.get("ID") as string;
-		if (id && AppData.Books.containsKey(id)) {
-			this.booksSvc.updateCounters(id);
-			if (!AppData.Books.getValue(id).Cards) {
+		this.booksSvc.getAsync(id, () => {
+			if (AppData.Books.containsKey(id) && !AppData.Books.getValue(id).Cards) {
 				this.booksSvc.getCards(id);
 			}
 			this.prepare();
-		}
-		else {
-			this.booksSvc.getAsync(id, () => {
-				if (AppData.Books.containsKey(id) && !AppData.Books.getValue(id).Cards) {
-					this.booksSvc.getCards(id);
-				}
-				this.prepare();
-			});
-		}
+		});
 
 		AppEvents.on(
 			"BookStatisticsAreUpdated",

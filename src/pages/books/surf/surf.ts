@@ -57,6 +57,7 @@ export class SurfBooksPage {
 	};
 	sorts: Array<any> = [];
 	books: Array<AppModels.Book> = [];
+	stocks = {};
 	ratings = {};
 
 	// controls
@@ -219,10 +220,18 @@ export class SurfBooksPage {
 		
 		// ratings & stocks
 		new List(this.books).ForEach(b => {
-			if (!this.ratings[b.ID]) {
-				let rating = b.RatingPoints.getValue("General");
-				this.ratings[b.ID] = rating != undefined ? rating.Average : 0;
-			}
+			this.ratings[b.ID] = this.ratings[b.ID] 
+				|| (b.RatingPoints.containsKey("General")
+					? b.RatingPoints.getValue("General").Average
+					: 0);
+			this.stocks[b.ID] = this.stocks[b.ID] || {
+				libraries: b.Stocks.containsKey("Libraries")
+					? b.Stocks.getValue("Libraries").Total
+					: 0,
+				available: b.Stocks.containsKey("Available")
+					? b.Stocks.getValue("Available").Total
+					: 0
+			};
 		});
 
 		// post handler

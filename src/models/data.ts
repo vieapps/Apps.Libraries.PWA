@@ -9,8 +9,8 @@ export namespace AppData {
 	export var Configuration = {
 		app: {
 			uris: {
-				apis: "https://apis.prj.vn/",
-				files: "https://afs.prj.vn/",
+				apis: "http://local-apis.vieapps.net/",
+				files: "http://local-afs.vieapps.net/",
 				activations: "https://chomuonsach.com/"
 			},
 			debug: true,

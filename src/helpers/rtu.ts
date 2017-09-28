@@ -124,7 +124,6 @@ export namespace AppRTU {
 		sender.onclose = (event) => {
 			status.sender = "close";
 			AppUtility.isDebug() && console.info("[RTU]: Sender is closed...");
-			AppUtility.isNotEmpty(uri) && status.sender != "restarting" && restart();
 		};
 
 		sender.onerror = (event) => {
@@ -152,7 +151,7 @@ export namespace AppRTU {
 		status.sender = "restarting";
 		console.warn("[RTU]: " + (reason || "Re-start because the WebSocket connection is broken"));
 
-		window.setTimeout(() => {
+		AppUtility.setTimeout(() => {
 			console.info("[RTU]: Re-starting...");
 
 			if (receiver != null) {

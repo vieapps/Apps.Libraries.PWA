@@ -17,9 +17,9 @@
 
 <ion-content padding>
 
-	<div style="margin-bottom:16px" *ngIf="info.state.adding">
+	<div *ngIf="info.state.adding">
 		<ion-item class="item-label-floating completer-container">
-			<ng2-completer #search name="addresses" [inputClass]="info.state.css" inputId="book"
+			<ng2-completer #search name="addresses" [inputClass]="info.state.css"
 				placeholder="Nhập tên sách, tác giả, ... để tìm kiếm (không dấu cũng OK)"
 				textSearching="tìm kiếm..." pause="450" clearSelected="true" minSearchLength="3"
 				[datasource]="searchCompleter"(selected)="select($event)"></ng2-completer>
@@ -55,17 +55,17 @@
 		<div class="stocks">
 			<ion-item>
 				<ion-label>Thư viện:</ion-label>
-				<ion-select [(ngModel)]="info.library">
-					<ion-option [value]="lib.id" *ngFor="let lib of info.libraries">{{lib.name}}</ion-option>
+				<ion-select [(ngModel)]="info.library.id">
+					<ion-option [value]="lib.id" *ngFor="let lib of info.libraries">{{lib.title}}</ion-option>
 				</ion-select>
 			</ion-item>
-			<ion-item *ngIf="info.stocks[info.library]">
+			<ion-item *ngIf="info.stocks[info.library.id]">
 				<ion-label>Tổng số cuốn:</ion-label>
-				<ion-input #all required text-right type="number" min="0" [(ngModel)]="info.stocks[info.library].all" (change)="onChange()"></ion-input>
+				<ion-input #all required text-right type="number" min="0" [(ngModel)]="info.stocks[info.library.id].all" (change)="onChange()"></ion-input>
 			</ion-item>
-			<ion-item *ngIf="info.stocks[info.library]">
+			<ion-item *ngIf="info.stocks[info.library.id]">
 				<ion-label>Tổng số có thể cho mượn:</ion-label>
-				<ion-input #available required text-right type="number" min="0" [(ngModel)]="info.stocks[info.library].available" (change)="onChange()"></ion-input>
+				<ion-input #available required text-right type="number" min="0" [(ngModel)]="info.stocks[info.library.id].available" (change)="onChange()"></ion-input>
 			</ion-item>			
 		</div>
 
@@ -75,7 +75,7 @@
 			</ion-list-header>
 			<ion-item *ngFor="let lib of info.libraries">
 				<label>
-					{{lib.name}}
+					{{lib.title}}
 				</label>
 				<span class="available">
 					{{info.stocks[lib.id] ? info.stocks[lib.id].available : 0}}

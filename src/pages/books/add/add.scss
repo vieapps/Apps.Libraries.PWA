@@ -1,4 +1,7 @@
 page-add-book {
+	ion-content > div.scroll-content > div:first-of-type {
+		margin-bottom: 16px;
+	}
 	div.info > ion-thumbnail {
 		float: left;
 	}

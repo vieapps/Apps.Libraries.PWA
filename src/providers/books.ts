@@ -81,7 +81,7 @@ export class BooksService {
 
 	async getAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
 		var book = AppData.Books.getValue(id);
-		if (book != undefined) {
+		if (book) {
 			this.updateCounters(id);
 			onNext != undefined && onNext();
 			return;
@@ -118,11 +118,10 @@ export class BooksService {
 	}
 
 	getCards(id: string, action?: string, onCompleted?: () => void) {
-		AppData.Books.getValue(id) && AppRTU.isReady()
+		AppData.Books.containsKey(id) && AppRTU.isReady()
 		&& AppRTU.call("libraries", "book", "GET", {
 			"object-identity": "cards",
-			"id": id,
-			"action": action || "View"
+			"id": id
 		});
 		onCompleted != undefined && onCompleted();
 	}
