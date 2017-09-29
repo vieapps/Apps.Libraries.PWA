@@ -109,10 +109,12 @@ export class LibrariesService {
 		}
 	}
 
-	async getAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	async getAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, dontUpdateCounters?: boolean) {
 		var library = AppData.Libraries.getValue(id);
-		if (library != undefined) {
-			this.updateCounters(id);
+		if (library) {
+			if (!AppUtility.isTrue(dontUpdateCounters)) {
+				this.updateCounters(id);
+			}
 			onNext != undefined && onNext();
 			return;
 		}
@@ -122,7 +124,9 @@ export class LibrariesService {
 			let data = response.json();
 			if (data.Status == "OK") {
 				AppModels.Library.update(data.Data);
-				this.updateCounters(id);
+				if (!AppUtility.isTrue(dontUpdateCounters)) {
+					this.updateCounters(id);
+				}
 				onNext != undefined && onNext(data);
 			}
 			else {

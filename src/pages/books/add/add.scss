@@ -21,10 +21,14 @@ page-add-book {
 		margin-top: 16px;
 	}
 	ion-list.current {
-		margin-top: 16px;
+		margin-top: 30px;
 	}
 	ion-list.current > ion-list-header {
 		margin-bottom: 0;
+		border-top: none;
+		text-transform: uppercase;
+		font-weight: bold;
+		color: #000;
 	}
 	ion-list.current ion-label > span {
 		float: right;

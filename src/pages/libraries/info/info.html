@@ -16,19 +16,25 @@
 				Đặt quyền
 			</button>
 		</ion-buttons>
+		<ion-buttons right *ngIf="info.state.mode == 'Info'">
+			<button ion-button icon-left (click)="addBook()">
+				<ion-icon name="chatboxes"></ion-icon>
+				Trao đổi
+			</button>
+		</ion-buttons>
 		<ion-title>{{info.title}}</ion-title>
 	</ion-navbar>
 </ion-header>
 
-<ion-footer *ngIf="info.state.mode == 'Info' && (canModerate() || authSvc.isAdministrator())">
+<ion-footer *ngIf="info.state.mode == 'Info' && canModerate()">
 	<ion-toolbar>
-		<ion-buttons left *ngIf="canModerate()">
+		<ion-buttons left>
 			<button ion-button icon-left (click)="addBook()">
-				<ion-icon name="add"></ion-icon>
+				<ion-icon name="add-circle"></ion-icon>
 				Thêm sách vào thư viện
 			</button>
 		</ion-buttons>
-		<ion-buttons right>
+		<ion-buttons right *ngIf="canModerate()">
 			<button ion-button icon-only (click)="showActions()">
 				<ion-icon name="more"></ion-icon>
 			</button>
@@ -36,7 +42,7 @@
 	</ion-toolbar>
 </ion-footer>
 
-<ion-content padding [class.no-footer]="info.state.mode != 'Info' || !(canModerate() || authSvc.isAdministrator())">
+<ion-content padding [class.no-footer]="info.state.mode != 'Info' || !canModerate()">
 
 	<div *ngIf="info.state.mode == 'Info'">
 		<figure>
@@ -100,6 +106,30 @@
 				</h2>
 			</button>
 			<ion-item text-right class="more" [hidden]="lastUpdated.limit >= lastUpdated.all.length" (click)="showAllBooks('LastUpdated')">
+				xem thêm
+			</ion-item>
+		</ion-list>
+		<ion-list class="books" *ngIf="mostBorrowed.all.length > 0">
+			<ion-list-header>
+				Sách được mượn nhiều nhất
+			</ion-list-header>				
+			<button ion-item detail-none *ngFor="let b of mostBorrowed.books; trackBy: trackBook" (click)="openBook(b)">
+				<ion-thumbnail item-left>
+					<img [src]="b.Cover" width="65" height="80"/>
+				</ion-thumbnail>
+				<p>
+					<span>
+						{{b.Author}}
+					</span>
+					<span class="info">
+						<rating [(ngModel)]="ratings[b.ID]" [max]="5" [readonly]="true" [float]="true"></rating>
+					</span>
+				</p>
+				<h2>
+					{{b.Title}}
+				</h2>
+			</button>
+			<ion-item text-right class="more" [hidden]="mostBorrowed.limit >= mostBorrowed.all.length" (click)="showAllBooks('MostBorrowed')">
 				xem thêm
 			</ion-item>
 		</ion-list>

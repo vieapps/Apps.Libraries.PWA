@@ -58,13 +58,13 @@
 				<span class="info">
 					<span *ngIf="b.TotalOfLibraries > 0">
 						<span class="available" [class.not]="b.TotalOfLibraries < 1">
-							{{b.TotalOfLibraries | number}}
+							{{b.TotalOfLibraries | vinumber}}
 						</span>
 						<ion-icon name="school"></ion-icon>
 					</span>
 					<span *ngIf="b.TotalOfAvailableBooks > 0">
 						<span class="available" [class.not]="b.TotalOfAvailableBooks < 1">
-							{{b.TotalOfAvailableBooks | number}}
+							{{b.TotalOfAvailableBooks | vinumber}}
 						</span>
 						<ion-icon name="book"></ion-icon>
 					</span>

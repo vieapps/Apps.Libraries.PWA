@@ -295,8 +295,8 @@ export class SearchLibrariesPage {
 	}
 
 	// helpers
-	getAvatar(library: AppModels.Library) {
-		return AppUtility.getAvatarImage(library);
+	getAvatar(lib: AppModels.Library) {
+		return AppUtility.getAvatarImage(lib);
 	}
 
 	openLibrary(library: AppModels.Library) {

@@ -186,6 +186,14 @@ ion-avatar > img {
 }
 
 /* listing of books */
+.books.list > .item.list-header {
+	padding-top: 13px;
+}
+.books.list > .item.list-header > div > div > ion-label.label {
+	text-transform: uppercase;
+	color: #000;
+	font-weight: bold;
+}
 .books.list > .item ion-thumbnail {
 	min-width: initial;
 }
@@ -216,6 +224,10 @@ ion-avatar > img {
 	vertical-align: middle;
 	margin-top: -1px;
 	font-size: 1.7rem;
+}
+.books.list > .item.more {
+	color: #488aff;
+	cursor: pointer;
 }
 
 /* permanent link */

@@ -39,7 +39,7 @@ export class AddBookPage {
 			id: undefined as string,
 			current: undefined as AppModels.Library
 		},
-		libraries: new Array<{ id: string, title: string }>(),
+		libraries: new Array<{ id: string, title: string, isOwner: boolean }>(),
 		stocks: {},
 		rating: 0.0,
 		state: {
@@ -79,8 +79,12 @@ export class AddBookPage {
 			await Promise.all(new List(AppData.Configuration.session.account.profile.Libraries)
 				.Select(id => this.libsSvc.getAsync(id, () => {
 						let lib = AppData.Libraries.getValue(id);
-						this.info.libraries.push({ id: lib.ID, title: lib.Title });
-					})
+						this.info.libraries.push({
+							id: lib.ID,
+							title: lib.Title,
+							isOwner: lib.OwnerID == AppData.Configuration.session.account.id
+						});
+					}, undefined, true)
 				)
 				.ToArray()
 			);
@@ -146,10 +150,12 @@ export class AddBookPage {
 
 		if (!this.info.library.current) {
 			this.info.library.id = this.info.library.id
-				? this.info.library.id
-				: this.info.book.Cards && this.info.book.Cards.size() > 0
+				|| new List(this.info.libraries).Where(l => l.isOwner).Select(l => l.id).FirstOrDefault();
+			if (!this.info.library.id) {
+				this.info.library.id = this.info.book.Cards && this.info.book.Cards.size() > 0
 					? this.info.book.Cards.values()[0].LibraryID
 					: this.info.libraries[0].id;
+			}
 			this.info.library.current = AppData.Libraries.getValue(this.info.library.id);
 		}
 		

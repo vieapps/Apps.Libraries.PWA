@@ -97,4 +97,44 @@ page-book-info {
 			text-align: left;
 		}
 	}
+	ion-list.libraries {
+		border-bottom: 1px solid #dedede;
+	}
+	ion-list.libraries > ion-list-header {
+		padding-top: 16px;
+	}
+	ion-list.libraries > ion-list-header > div > div > ion-label.label {
+		text-transform: uppercase;
+		font-weight: bold;
+		color: #000;
+	}
+	ion-list.libraries > ion-item > ion-avatar > img {
+		height: 60px;
+		width: 60px;
+	}
+	ion-list.libraries > ion-item > div > div > ion-label.label > p {
+		display: block;
+		width: 100%;
+	}
+	ion-list.libraries > ion-item > div > div > ion-label.label > p:first-of-type {
+		margin: 5px 0;
+	}
+	ion-list.libraries > ion-item > div > div > ion-label.label > p:last-of-type > label {
+		display: inline-block;
+		line-height: 34px;
+		vertical-align: middle;
+	}
+	ion-list.libraries > ion-item > div > div > ion-label.label > p:last-of-type > label > span {
+		font-weight: bold;
+	}
+	ion-list.libraries > ion-item > div > div > ion-label.label > p:last-of-type > label.available > span {
+		color: darkgreen;
+	}
+	ion-list.libraries > ion-item > div > div > ion-label.label > p:last-of-type > label.not.available > span {
+		color: red;
+	}
+	ion-list.libraries > ion-item > div > div > ion-label.label > p:last-of-type > span {
+		display: block;
+		float: right;
+	}
 }
