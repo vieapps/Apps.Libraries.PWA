@@ -33,10 +33,6 @@ export class BookInfoPage {
 		borrowed: undefined as AppModels.CounterInfo,
 		title: "Thông tin",
 		rating: 0.0,
-		stocks: {
-			libraries: 0,
-			available: 0
-		},
 		limit: 260,
 		uri: "",
 		qrcode: "",
@@ -78,14 +74,6 @@ export class BookInfoPage {
 		this.info.rating = this.info.book.RatingPoints.containsKey("General")
 			? this.info.book.RatingPoints.getValue("General").Average
 			: 0.0;
-
-		this.info.stocks.libraries = this.info.book.Cards
-			? this.info.book.Cards.size() 
-			: 0;
-
-		this.info.stocks.available = this.info.book.Stocks.containsKey("Available")
-			? this.info.book.Stocks.getValue("Available").Total
-			: 0;
 
 		this.info.uri = AppUtility.getUri() + "#?book=" + AppUtility.getBase64UrlParam({ ID: this.info.book.ID });
 		this.info.qrcode = this.info.processByApp

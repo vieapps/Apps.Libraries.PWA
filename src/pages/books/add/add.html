@@ -7,7 +7,6 @@
 		</ion-buttons>
 		<ion-buttons right *ngIf="this.info.book">
 			<button ion-button icon-left (click)="update()">
-				<ion-icon name="cloud-upload"></ion-icon>
 				Cập nhật
 			</button>
 		</ion-buttons>
@@ -59,11 +58,11 @@
 					<ion-option [value]="lib.id" *ngFor="let lib of info.libraries">{{lib.title}}</ion-option>
 				</ion-select>
 			</ion-item>
-			<ion-item *ngIf="info.stocks[info.library.id]">
+			<ion-item *ngIf="info.library.id && info.stocks[info.library.id]">
 				<ion-label>Tổng số cuốn:</ion-label>
 				<ion-input #all required text-right type="number" min="0" [(ngModel)]="info.stocks[info.library.id].all" (change)="onChange()"></ion-input>
 			</ion-item>
-			<ion-item *ngIf="info.stocks[info.library.id]">
+			<ion-item *ngIf="info.library.id && info.stocks[info.library.id]">
 				<ion-label>Tổng số có thể cho mượn:</ion-label>
 				<ion-input #available required text-right type="number" min="0" [(ngModel)]="info.stocks[info.library.id].available" (change)="onChange()"></ion-input>
 			</ion-item>			

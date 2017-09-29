@@ -79,6 +79,30 @@
 				{{getAliasUri()}}
 			</ion-item>
 		</div>
+		<ion-list class="books" *ngIf="lastUpdated.all.length > 0">
+			<ion-list-header>
+				Sách mới cập nhật
+			</ion-list-header>				
+			<button ion-item detail-none *ngFor="let b of lastUpdated.books; trackBy: trackBook" (click)="openBook(b)">
+				<ion-thumbnail item-left>
+					<img [src]="b.Cover" width="65" height="80"/>
+				</ion-thumbnail>
+				<p>
+					<span>
+						{{b.Author}}
+					</span>
+					<span class="info">
+						<rating [(ngModel)]="ratings[b.ID]" [max]="5" [readonly]="true" [float]="true"></rating>
+					</span>
+				</p>
+				<h2>
+					{{b.Title}}
+				</h2>
+			</button>
+			<ion-item text-right class="more" [hidden]="lastUpdated.limit >= lastUpdated.all.length" (click)="showAllBooks('LastUpdated')">
+				xem thêm
+			</ion-item>
+		</ion-list>
 	</div>
 
 	<form #form="ngForm" [hidden]="info.state.mode != 'Register' && info.state.mode != 'Update'">

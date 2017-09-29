@@ -170,15 +170,8 @@ export class SearchPage {
 			? this.books.concat(books.ToArray())
 			: books.ToArray();
 
-		// prepare ratings & stocks
-		new List(this.books).ForEach(b => {
-			if (!this.ratings[b.ID]) {
-				let rating = b.RatingPoints.getValue("General");
-				this.ratings[b.ID] = rating != undefined
-					? rating.Average
-					: 0;
-			}
-		});
+		// prepare ratings
+		new List(this.books).ForEach(b => this.ratings[b.ID] = this.ratings[b.ID] || (b.RatingPoints.containsKey("General") ? b.RatingPoints.getValue("General").Average : 0));
 	}
 
 	trackBy(index: number, book: AppModels.Book) {

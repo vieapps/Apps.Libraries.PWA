@@ -127,6 +127,10 @@ export namespace AppModels {
 		Cards: Collections.Dictionary<string, Card> = undefined;
 		LastUpdated = new Date();
 		
+		TotalOfAllBooks = 0;
+		TotalOfAvailableBooks = 0;
+		TotalOfLibraries = 0;
+
 		ANSITitle = "";
 		
 		constructor() {
@@ -137,15 +141,46 @@ export namespace AppModels {
 		static deserialize(json: any, book?: Book) {
 			book = book || new Book();
 			AppUtility.copy(json, book, (data: any) => {
-				book.Counters = new Collections.Dictionary<string, CounterInfo>();
-				new List<any>(data.Counters).ForEach(c => book.Counters.setValue(c.Type, CounterInfo.deserialize(c)));
+				if (book.TotalOfAllBooks < 0) {
+					book.TotalOfAllBooks = 0;
+				}
 
-				book.RatingPoints = new Collections.Dictionary<string, RatingPoint>();
-				new List<any>(data.RatingPoints).ForEach(r => book.RatingPoints.setValue(r.Type, RatingPoint.deserialize(r)));
+				if (book.TotalOfAvailableBooks < 0) {
+					book.TotalOfAvailableBooks = 0;
+				}
+
+				if (book.TotalOfLibraries < 0) {
+					book.TotalOfLibraries = 0;
+				}
+						
+				if (data.Counters && AppUtility.isArray(data.Counters)) {
+					book.Counters = book.Counters instanceof Collections.Dictionary
+						? book.Counters || new Collections.Dictionary<string, CounterInfo>()
+						: new Collections.Dictionary<string, CounterInfo>();
+					new List<any>(data.Counters).ForEach(c => book.Counters.setValue(c.Type, CounterInfo.deserialize(c)));
+				}
+
+				if (data.RatingPoints && AppUtility.isArray(data.RatingPoints)) {
+					book.RatingPoints = book.RatingPoints instanceof Collections.Dictionary
+						? book.RatingPoints || new Collections.Dictionary<string, RatingPoint>()
+						: new Collections.Dictionary<string, RatingPoint>();
+					new List<any>(data.RatingPoints).ForEach(r => book.RatingPoints.setValue(r.Type, RatingPoint.deserialize(r)));
+				}
 			
-				book.Stocks = new Collections.Dictionary<string, CounterBase>();
-				new List<any>(data.Stocks).ForEach(c => book.Stocks.setValue(c.Type, CounterBase.deserialize(c)));
+				if (data.Stocks && AppUtility.isArray(data.Stocks)) {
+					book.Stocks = book.Stocks instanceof Collections.Dictionary
+						? book.Stocks || new Collections.Dictionary<string, CounterBase>()
+						: new Collections.Dictionary<string, CounterBase>();
+					new List<any>(data.Stocks).ForEach(c => book.Stocks.setValue(c.Type, CounterBase.deserialize(c)));
+				}
 	
+				if (data.Cards && AppUtility.isArray(data.Cards)) {
+					book.Cards = book.Cards instanceof Collections.Dictionary
+						? book.Cards || new Collections.Dictionary<string, Card>()
+						: new Collections.Dictionary<string, Card>();
+					new List<any>(data.Cards).ForEach(c => book.Cards.setValue(c.ID, Card.deserialize(c)));
+				}
+
 				book.ANSITitle = AppUtility.toANSI(book.Title + " " + book.Author).toLowerCase();
 			});
 			return book;
@@ -175,10 +210,12 @@ export namespace AppModels {
 		RatingPoints: Collections.Dictionary<string, RatingPoint> = undefined;
 		Stocks: Collections.Dictionary<string, CounterBase> = undefined;
 		Privileges = new Privileges();
-		Books: Array<string> = undefined;
 		Updated = new Date();
 		UpdatedID = "";
 
+		LastUpdatedBooks = new Array<string>();
+		MostBorrowedBooks = new Array<string>();
+		
 		Address = "";
 		ANSITitle = "";
 

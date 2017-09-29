@@ -38,14 +38,14 @@
 	<div padding class="info">
 		<rating [(ngModel)]="info.rating" [max]="5" [readonly]="true" [float]="true"></rating>
 		<span>
-			<span class="available" [class.not]="info.stocks.libraries < 1">
-				{{info.stocks.libraries | number}}
+			<span class="available" [class.not]="info.book.TotalOfLibraries < 1">
+				{{info.book.TotalOfLibraries | number}}
 			</span>
-			<ion-icon name="albums"></ion-icon>
+			<ion-icon name="school"></ion-icon>
 		</span>
 		<span>
-			<span class="available" [class.not]="info.stocks.available < 1">
-				{{info.stocks.available | number}}
+			<span class="available" [class.not]="info.book.TotalOfAvailableBooks < 1">
+				{{info.book.TotalOfAvailableBooks | number}}
 			</span>
 			<ion-icon name="book"></ion-icon>
 		</span>

@@ -166,89 +166,6 @@ export class LibrariesService {
 		}
 	}
 
-	getBooks(id: string, start?: number) {
-		if (!AppData.Libraries.containsKey(id)) {
-			return;
-		}
-
-		let library = AppData.Libraries.getValue(id);
-		if (!library.Books) {
-			AppAPI.Get("libraries/library/books?id=" + id)
-				.map(response => response.json())
-				.subscribe(
-					(data: any) => {
-						if (data.Status == "OK") {
-							library = AppData.Libraries.getValue(id);
-							library.Books = data.Data.Books;
-							AppUtility.setTimeout(() => {
-								this.getBooks(library.ID, 0);
-							}, 123);
-						}
-						else {
-							console.error("[Libraries]: Error occurred while fetching the books of a library");
-							AppUtility.isObject(data.Error, true) && console.log("[" + data.Error.Type + "]: " + data.Error.Message);
-						}
-					},
-					(error: any) => {
-						console.error("[Libraries]: Error occurred while fetching the books of a library", error);
-					}
-				);
-		}
-		else {
-			start = start || 0;
-			if (start >= library.Books.length) {
-				return;
-			}
-
-			let counter = 0;			
-			let ids = "";
-			while (counter < 50 && start + counter < library.Books.length) {
-				let b = library.Books[start + counter];
-				if (AppUtility.indexOf(b, ":true") < 0 && !AppData.Books.containsKey(b)) {
-					ids += (ids != "" ? "," : "") + b;
-				}
-				counter++;
-			}
-
-			let getNext = () => {
-				AppUtility.setTimeout(() => {
-					this.getBooks(library.ID, start + counter);
-				}, 123);
-			}
-
-			if (ids == "") {
-				getNext();
-			}
-			else {
-				AppAPI.Get("libraries/books?ids=" + ids)
-					.map(response => response.json())
-					.subscribe(
-						(data: any) => {
-							if (data.Status == "OK") {
-								new List<any>(data.Data.Books).ForEach(b => {
-									AppModels.Book.update(b);
-									let index = AppUtility.find(library.Books, (i => i == b.ID));
-									if (index > -1) {
-										library.Books[index] = b.ID + ":true";
-									}
-								});
-								getNext();
-							}
-							else {
-								console.error("[Libraries]: Error occurred while fetching the books of a library");
-								AppUtility.isObject(data.Error, true) && console.log("[" + data.Error.Type + "]: " + data.Error.Message);
-								getNext();
-							}
-						},
-						(error: any) => {
-							console.error("[Libraries]: Error occurred while fetching the books of a library", error);
-							getNext();
-						}
-					);
-			}
-		}
-	}
-
 	updateCounters(id: string, action?: string, onCompleted?: () => void) {
 		AppData.Libraries.getValue(id) != undefined
 		&& AppRTU.isReady()
@@ -260,13 +177,32 @@ export class LibrariesService {
 		onCompleted != undefined && onCompleted();
 	}
 
-	setCounters(info: any, onCompleted?: () => void) {
+	updateStatistics(info: any, onCompleted?: () => void) {
 		var library = AppUtility.isObject(info, true)
 			? AppData.Libraries.getValue(info.ID)
 			: undefined;
 
-		if (library != undefined && AppUtility.isArray(info.Counters)) {
-			new List<any>(info.Counters).ForEach(c => library.Counters.setValue(c.Type, AppModels.CounterInfo.deserialize(c)));
+		if (library) {
+			if (info.Counters && AppUtility.isArray(info.Counters)) {
+				new List<any>(info.Counters).ForEach(c => library.Counters.setValue(c.Type, AppModels.CounterInfo.deserialize(c)));
+			}
+
+			if (info.RatingPoints && AppUtility.isArray(info.RatingPoints)) {
+				new List<any>(info.RatingPoints).ForEach(r => library.RatingPoints.setValue(r.Type, AppModels.RatingPoint.deserialize(r)));
+			}
+			
+			if (info.Stocks && AppUtility.isArray(info.Stocks)) {
+				new List<any>(info.Stocks).ForEach(c => library.Stocks.setValue(c.Type, AppModels.CounterBase.deserialize(c)));
+			}
+			
+			if (info.LastUpdatedBooks && AppUtility.isArray(info.LastUpdatedBooks)) {
+				library.LastUpdatedBooks = info.LastUpdatedBooks;
+			}
+			
+			if (info.MostBorrowedBooks && AppUtility.isArray(info.MostBorrowedBooks)) {
+				library.MostBorrowedBooks = info.MostBorrowedBooks;
+			}
+
 			AppEvents.broadcast("LibraryStatisticsAreUpdated", { ID: library.ID });
 		}
 
@@ -387,16 +323,8 @@ export class LibrariesService {
 		}
 
 		// librarys' counters
-		else if (info.ObjectName == "Library#Counters") {
-			this.setCounters(message.Data);
-		}
-
-		// librarys' books
-		else if (info.ObjectName == "Library#Books") {
-			let library = AppData.Libraries.getValue(message.Data.ID);
-			if (library && AppUtility.isArray(message.Data.Books)) {
-				library.Books = message.Data.Books;
-			}
+		else if (info.ObjectName == "Library#Counters" || info.ObjectName == "Library#Statistics") {
+			this.updateStatistics(message.Data);
 		}
 
 		// library is deleted

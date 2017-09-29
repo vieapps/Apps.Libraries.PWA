@@ -50,9 +50,10 @@ export class AddBookPage {
 
 	// controls
 	@ViewChild("search") searchCtrl: CompleterCmp;
+	searchCompleter: AppAPI.CompleterCustomSearch = undefined;
+	
 	@ViewChild("all") stockAllCtrl;
 	@ViewChild("available") stockAvailableCtrl;
-	searchCompleter: AppAPI.CompleterCustomSearch = undefined;
 
 	// events
 	ionViewDidLoad() {
@@ -92,6 +93,7 @@ export class AddBookPage {
 			this.showInfo();
 		}
 		else {
+			this.setFocus();
 			this.info.title = "Cập nhật sách vào thư viện";
 			this.info.state.adding = true;
 			this.info.state.css = AppUtility.getInputCss();
@@ -108,10 +110,10 @@ export class AddBookPage {
 						}
 						let book = AppData.Books.getValue(b.ID);
 						items.push({
-								title: book.Title,
-								description: book.Author + " (" + book.Publisher + " - " + book.Producer + ")",
-								image: AppUtility.getCoverImage(book.Cover),
-								originalObject: book
+							title: book.Title,
+							description: book.Author + " (" + book.Publisher + " - " + book.Producer + ")",
+							image: AppUtility.getCoverImage(book.Cover),
+							originalObject: book
 						} as CompleterItem);
 					});
 					return items;
@@ -120,20 +122,22 @@ export class AddBookPage {
 		}
 	}
 
-	setFocus() {
-		AppUtility.focus(this.info.book ? this.stockAllCtrl : this.searchCtrl.ctrInput, this.keyboard, 345);
+	setFocus(defer?: number) {
+		AppUtility.focus(!this.info.book && this.searchCtrl ? this.searchCtrl.ctrInput : this.stockAllCtrl, this.keyboard, defer || 345);
 	}
 
 	select(book: CompleterItem) {
 		if (AppUtility.isObject(book, null) && AppUtility.isObject(book.originalObject, null)) {
 			this.info.book = book.originalObject as AppModels.Book;
-			this.showInfo(() => {
-				this.setFocus();
-			});
+			this.showInfo();
+			this.setFocus();
+		}
+		else {
+			this.info.book = undefined;
 		}
 	}
 
-	showInfo(onCompleted?: () => void) {
+	showInfo() {
 		this.info.title = "Cập nhật: " + this.info.book.Title;
 
 		this.info.rating = this.info.book.RatingPoints.containsKey("General")
@@ -167,8 +171,6 @@ export class AddBookPage {
 						: 0
 			};
 		});
-
-		onCompleted != undefined && onCompleted();
 	}
 
 	onChange() {
@@ -181,6 +183,8 @@ export class AddBookPage {
 			? +this.info.stocks[this.info.library.id].available
 			: 0;
 		this.info.stocks[this.info.library.id].available = available > all ? all : available;
+
+		this.setFocus();
 	}
 
 	exit() {

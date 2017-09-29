@@ -56,15 +56,15 @@
 					{{b.Category}}
 				</span>
 				<span class="info">
-					<span *ngIf="stocks[b.ID] && stocks[b.ID].libraries > 0">
-						<span class="available" [class.not]="stocks[b.ID].libraries < 1">
-							{{stocks[b.ID].libraries | number}}
+					<span *ngIf="b.TotalOfLibraries > 0">
+						<span class="available" [class.not]="b.TotalOfLibraries < 1">
+							{{b.TotalOfLibraries | number}}
 						</span>
-						<ion-icon name="albums"></ion-icon>
+						<ion-icon name="school"></ion-icon>
 					</span>
-					<span *ngIf="stocks[b.ID] && stocks[b.ID].available > 0">
-						<span class="available" [class.not]="stocks[b.ID].available < 1">
-							{{stocks[b.ID].available | number}}
+					<span *ngIf="b.TotalOfAvailableBooks > 0">
+						<span class="available" [class.not]="b.TotalOfAvailableBooks < 1">
+							{{b.TotalOfAvailableBooks | number}}
 						</span>
 						<ion-icon name="book"></ion-icon>
 					</span>

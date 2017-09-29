@@ -79,10 +79,12 @@ export class BooksService {
 		}
 	}
 
-	async getAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void) {
+	async getAsync(id: string, onNext?: (data?: any) => void, onError?: (error?: any) => void, dontUpdateCountes?: boolean) {
 		var book = AppData.Books.getValue(id);
 		if (book) {
-			this.updateCounters(id);
+			if (!AppUtility.isTrue(dontUpdateCountes)) {
+				this.updateCounters(id);
+			}
 			onNext != undefined && onNext();
 			return;
 		}
@@ -92,7 +94,9 @@ export class BooksService {
 			let data = response.json();
 			if (data.Status == "OK") {
 				AppModels.Book.update(data.Data);
-				this.updateCounters(id);
+				if (!AppUtility.isTrue(dontUpdateCountes)) {
+					this.updateCounters(id);
+				}
 				onNext != undefined && onNext(data);
 			}
 			else {
@@ -132,24 +136,47 @@ export class BooksService {
 			: undefined;
 
 		if (book) {
-			// counters
-			if (AppUtility.isArray(data.Counters)) {
+			if (data.TotalOfAllBooks != undefined) {
+				book.TotalOfAllBooks = +data.TotalOfAllBooks;
+			}
+			
+			if (data.TotalOfAvailableBooks != undefined) {
+				book.TotalOfAvailableBooks = +data.TotalOfAvailableBooks;
+			}
+
+			if (data.TotalOfLibraries != undefined) {
+				book.TotalOfLibraries = +data.TotalOfLibraries;
+			}
+
+			if (data.LastUpdated != undefined) {
+				book.LastUpdated = new Date(data.LastUpdated);
+			}
+					
+			if (data.Counters && AppUtility.isArray(data.Counters)) {
+				book.Counters = book.Counters instanceof Collections.Dictionary
+					? book.Counters || new Collections.Dictionary<string, AppModels.CounterInfo>()
+					: new Collections.Dictionary<string, AppModels.CounterInfo>();
 				new List<any>(data.Counters).ForEach(c => book.Counters.setValue(c.Type, AppModels.CounterInfo.deserialize(c)));
 			}
 
-			// rating points
-			if (AppUtility.isArray(data.RatingPoints)) {
+			if (data.RatingPoints && AppUtility.isArray(data.RatingPoints)) {
+				book.RatingPoints = book.RatingPoints instanceof Collections.Dictionary
+					? book.RatingPoints || new Collections.Dictionary<string, AppModels.RatingPoint>()
+					: new Collections.Dictionary<string, AppModels.RatingPoint>();
 				new List<any>(data.RatingPoints).ForEach(r => book.RatingPoints.setValue(r.Type, AppModels.RatingPoint.deserialize(r)));
 			}
 			
-			// stocks
-			if (AppUtility.isArray(data.Stocks)) {
+			if (data.Stocks && AppUtility.isArray(data.Stocks)) {
+				book.Stocks = book.Stocks instanceof Collections.Dictionary
+					? book.Stocks || new Collections.Dictionary<string, AppModels.CounterBase>()
+					: new Collections.Dictionary<string, AppModels.CounterBase>();
 				new List<any>(data.Stocks).ForEach(c => book.Stocks.setValue(c.Type, AppModels.CounterBase.deserialize(c)));
 			}
 
-			// cards
 			if (AppUtility.isArray(data.Cards)) {
-				book.Cards = book.Cards || new Collections.Dictionary<string, AppModels.Card>();
+				book.Cards = book.Cards instanceof Collections.Dictionary
+					? book.Cards || new Collections.Dictionary<string, AppModels.Card>()
+					: new Collections.Dictionary<string, AppModels.Card>();
 				new List<any>(data.Cards).ForEach(c => book.Cards.setValue(c.ID, AppModels.Card.deserialize(c)));
 			}
 

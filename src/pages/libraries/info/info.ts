@@ -17,8 +17,10 @@ import { AppModels } from "../../../models/objects";
 import { ConfigurationService } from "../../../providers/configuration";
 import { AuthenticationService } from "../../../providers/authentication";
 import { LibrariesService } from "../../../providers/libraries";
+import { BooksService } from "../../../providers/books";
 
 import { AddBookPage } from "../../books/add/add";
+import { BookInfoPage } from "../../books/info/info";
 
 @Component({
 	selector: "page-library-info",
@@ -36,7 +38,8 @@ export class LibraryInfoPage {
 		public keyboard: Keyboard,
 		public configSvc: ConfigurationService,
 		public authSvc: AuthenticationService,
-		public librariesSvc: LibrariesService
+		public libsSvc: LibrariesService,
+		public booksSvc: BooksService
 	){
 		this.info.state.mode = this.configSvc.isAuthenticated() && AppUtility.isTrue(this.navParams.get("Register"))
 			? "Register"
@@ -77,6 +80,17 @@ export class LibraryInfoPage {
 			addresses: undefined
 		},
 		isAppleOS: AppUtility.isAppleOS()
+	};
+	ratings = {};
+	lastUpdated = {
+		limit: 3,
+		all: new Array<AppModels.Book>(),
+		books: new Array<AppModels.Book>()
+	};
+	mostBorrowed = {
+		limit: 3,
+		all: new Array<AppModels.Book>(),
+		books: new Array<AppModels.Book>()
 	};
 	privileges = { 
 		current: undefined as AppModels.Privileges,
@@ -125,6 +139,16 @@ export class LibraryInfoPage {
 			},
 			"EventHandlerToUpdateLibraryInfoOnPage"
 		);
+		
+		AppEvents.on(
+			"LibraryStatisticsAreUpdated",
+			(info: any) => {
+				if (this.info.library && this.info.library.ID == info.args.ID) {
+					this.prepare(info.args.ID, true);
+				}
+			},
+			"EventHandlerToUpdateLibraryStatisticsOnPage"
+		);
 	}
 
 	ionViewDidEnter() {
@@ -136,6 +160,7 @@ export class LibraryInfoPage {
 
 	ionViewWillUnload() {
 		AppEvents.off("LibraryIsUpdated", "EventHandlerToUpdateLibraryInfoOnPage");
+		AppEvents.off("LibraryStatisticsAreUpdated", "EventHandlerToUpdateLibraryStatisticsOnPage");
 	}
 
 	// run initialize
@@ -181,10 +206,13 @@ export class LibraryInfoPage {
 		);
 	}
 
-	prepare(id: string) {
+	prepare(id: string, dontUpdateCounter?: boolean) {
 		let library = AppData.Libraries.getValue(id);
+		if (!AppUtility.isTrue(dontUpdateCounter)) {
+			this.libsSvc.updateCounters(library.ID);
+		}
 
-		this.info.library = AppUtility.clone(library, ["Privileges", "Counters", "RatingPoints", "Stocks", "Books"]);
+		this.info.library = AppUtility.clone(library, ["Privileges", "Counters", "RatingPoints", "Stocks"]);
 		this.privileges.current = library.Privileges;
 
 		this.info.title = "Thư viện: " + library.Title;
@@ -193,9 +221,69 @@ export class LibraryInfoPage {
 			? library.RatingPoints.getValue("General").Average
 			: 0;
 
-		if (!library.Books) {
-			this.librariesSvc.getBooks(library.ID);
-		}
+		this.lastUpdated.all = [];
+		new List(library.LastUpdatedBooks).ForEach(id => {
+			let book = AppData.Books.getValue(id);
+			if (book) {
+				this.lastUpdated.all.push(book);
+				this.ratings[id] = book.RatingPoints.containsKey("General")
+					? book.RatingPoints.getValue("General").Average
+					: 0;
+			}
+			else {
+				this.booksSvc.getAsync(id, () => {
+					let book = AppData.Books.getValue(id);
+					this.lastUpdated.all.push(book);
+					this.ratings[id] = book.RatingPoints.containsKey("General")
+						? book.RatingPoints.getValue("General").Average
+						: 0;
+					this.lastUpdated.books = new List(this.lastUpdated.all)
+						.OrderByDescending(b => b.LastUpdated)
+						.Take(this.lastUpdated.limit)
+						.ToArray();
+				}, undefined, true);
+			}
+		});
+		this.lastUpdated.books = new List(this.lastUpdated.all)
+			.OrderByDescending(b => b.LastUpdated)
+			.Take(this.lastUpdated.limit)
+			.ToArray();
+		
+		this.mostBorrowed.all = [];
+		new List(library.MostBorrowedBooks).ForEach(id => {
+			let book = AppData.Books.getValue(id);
+			if (book) {
+				let borrowed = book.Stocks.getValue("Borrowed");
+				if (borrowed && borrowed.Total > 0) {
+					this.mostBorrowed.all.push(book);
+					this.ratings[id] = book.RatingPoints.containsKey("General")
+						? book.RatingPoints.getValue("General").Average
+						: 0;
+				}
+			}
+			else {
+				this.booksSvc.getAsync(id, () => {
+					let book = AppData.Books.getValue(id);
+					if (book) {
+						let borrowed = book.Stocks.getValue("Borrowed");
+						if (borrowed && borrowed.Total > 0) {
+							this.mostBorrowed.all.push(book);
+							this.ratings[id] = book.RatingPoints.containsKey("General")
+								? book.RatingPoints.getValue("General").Average
+								: 0;
+							this.mostBorrowed.books = new List(this.mostBorrowed.all)
+								.OrderByDescending(b => new List(b.Stocks.values()).FirstOrDefault(c => c.Type == "Borrowed").Total)
+								.Take(this.mostBorrowed.limit)
+								.ToArray();
+						}
+					}
+				}, undefined, true);
+			}
+		});
+		this.mostBorrowed.books = new List(this.mostBorrowed.all)
+			.OrderByDescending(b => new List(b.Stocks.values()).FirstOrDefault(c => c.Type == "Borrowed").Total)
+			.Take(this.mostBorrowed.limit)
+			.ToArray();
 	}
 
 	// event handlers
@@ -439,7 +527,7 @@ export class LibraryInfoPage {
 			this.info.library.Contact.County = this.info.address.current.county;
 			this.info.library.Contact.Province = this.info.address.current.province;
 			this.info.library.Contact.Country = this.info.address.current.country;
-			this.librariesSvc.registerAsync(this.info.library, 
+			this.libsSvc.registerAsync(this.info.library, 
 				(data: any) => {
 					this.showAlert(
 						"Đăng ký",
@@ -469,7 +557,7 @@ export class LibraryInfoPage {
 				this.info.library.Avatar = this.info.avatar.uploaded != ""
 				? this.info.avatar.uploaded
 				: "";
-				this.librariesSvc.updateAsync(this.info.library,
+				this.libsSvc.updateAsync(this.info.library,
 					() => {
 						this.prepare(this.info.library.ID);
 						this.cancelUpdate();
@@ -539,7 +627,7 @@ export class LibraryInfoPage {
 				.ToArray()
 		};
 		this.info.state.processing = true;
-		this.librariesSvc.updatePrivilegesAsync(info,
+		this.libsSvc.updatePrivilegesAsync(info,
 			(data: any) => {
 				this.prepare(this.info.library.ID);
 				this.cancelUpdate();
@@ -550,9 +638,34 @@ export class LibraryInfoPage {
 		);
 	}
 
-	// add a book
+	// working with a book
 	addBook() {
 		this.navCtrl.push(AddBookPage, { LibraryID: this.info.library.ID });
+	}
+
+	trackBook(index: number, book: AppModels.Book) {
+		return book.ID;
+	}
+
+	openBook(book: AppModels.Book) {
+		this.navCtrl.push(BookInfoPage, { ID: book.ID });
+	}
+
+	showAllBooks(type: string) {
+		if (type == "LastUpdated") {
+			this.lastUpdated.limit = this.lastUpdated.all.length;
+			this.lastUpdated.books = new List(this.lastUpdated.all)
+				.OrderByDescending(b => b.LastUpdated)
+				.Take(this.lastUpdated.limit)
+				.ToArray();
+		}
+		else {
+			this.mostBorrowed.limit = this.mostBorrowed.all.length;
+			this.mostBorrowed.books = new List(this.mostBorrowed.all)
+				.OrderByDescending(b => new List(b.Stocks.values()).FirstOrDefault(c => c.Type == "Borrowed").Total)
+				.Take(this.mostBorrowed.limit)
+				.ToArray();
+		}
 	}
 
 	// process the transactions

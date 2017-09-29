@@ -485,7 +485,7 @@ export class App {
 			]);
 		}
 
-		this.pages.push({ name: "SearchLibrariesPage", component: SearchLibrariesPage, title: "Hệ thống thư viện", icon: "planet" });
+		this.pages.push({ name: "SearchLibrariesPage", component: SearchLibrariesPage, title: "Hệ thống thư viện", icon: "school" });
 		this.pages.push({ name: "SearchPage", component: SearchPage, title: "Tìm kiếm", icon: "search" });
 	}
 
