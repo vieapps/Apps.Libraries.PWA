@@ -184,7 +184,7 @@ export class ProfilePage {
 		}
 	}
 
-	ionViewDidLeave() {
+	ionViewWillUnload() {
 		AppEvents.broadcast("SetPreviousPageActive", { current: "ProfilePage" });
 	}
 
