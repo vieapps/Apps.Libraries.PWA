@@ -11,7 +11,7 @@ import { AppData } from "../models/data";
   name: "vinumber"
 })
 export class VinumberPipe extends DecimalPipe {
-  transform(value: number): any {
+  transform(value: number): string {
 		return super.transform(value, "1.2-2").replace(".", "#").replace(/,/g, ".").replace("#", ",").replace(",00", "");
   }
 }
@@ -358,11 +358,11 @@ export namespace AppUtility {
 
 	/** Gets the current uri */
 	export function getUri() {
-		return isWebApp()
-			? indexOf(window.location.hostname, ".") < 0
+		return !isWebApp() || indexOf(window.location.href, "file://") > - 1
+			? AppData.Configuration.app.uris.activations
+			: indexOf(window.location.hostname, ".") < 0
 				? window.location.href
-				: window.location.protocol + "//" + window.location.hostname + "/"
-			: AppData.Configuration.app.uris.activations;
+				: window.location.protocol + "//" + window.location.hostname + "/";
 	}
 
 	/** Gets the CSS classes for working with input control */
